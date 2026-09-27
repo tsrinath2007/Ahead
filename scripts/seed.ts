@@ -10,7 +10,7 @@ import { SEEDED_CONTACTS } from '../lib/contacts';
 
 async function main() {
   console.log('====================================================');
-  console.log('🌱 MEETUP MEMORY - SEEDING HINDSIGHT MEMORY BANKS');
+  console.log('🌱 AHEAD - SEEDING HINDSIGHT MEMORY BANKS');
   console.log('====================================================');
 
   const baseUrl = process.env.HINDSIGHT_API_URL || 'https://api.hindsight.vectorize.io';

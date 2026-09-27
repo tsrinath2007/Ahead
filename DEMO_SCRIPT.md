@@ -1,4 +1,4 @@
-# MEETUP MEMORY — Comprehensive Hackathon Demo Script
+# Ahead (Know what matters before you meet) — Hackathon Demo Script
 
 **Target Run Time**: ~100–115 seconds (under 2 minutes)  
 **Objective**: Demonstrate how Hindsight turns pre-meeting preparation from generic discovery into high-stakes relationship intelligence that surfaces forgotten commitments and tracks portfolio health.
@@ -10,7 +10,7 @@
 - **Presenter**:
   > *"Every sales rep or executive has experienced this nightmare: You walk into a meeting with a client, exchange pleasantries, and completely forget that six weeks ago you promised them a critical document and never sent it.*
   >
-  > *Generic AI assistants don't help—they have zero memory between meetings. Meetup Memory uses Hindsight to give AI persistent episodic memory across past interactions."*
+  > *Generic AI assistants don't help—they have zero memory between meetings. Ahead uses Hindsight to give AI persistent episodic memory across past interactions."*
 
 ---
 
@@ -58,8 +58,8 @@
 - **Action**: Click **"Commitments Dashboard"** in the top navigation bar.
 - **Screen**: Transitions to `/commitments`.
 - **Presenter**:
-  > *"Finally, Meetup Memory isn't just for one contact. In this Portfolio Dashboard, Hindsight audits all memory banks across our entire client portfolio.*
+  > *"Finally, Ahead isn't just for one contact. In this Portfolio Dashboard, Hindsight audits all memory banks across our entire client portfolio.*
   >
   > *Elena Vance and Marcus Chen are 'On Track' with zero outstanding items, while Jordan Reyes is flagged for immediate executive attention.*
   >
-  > *That is organizational memory powered by Hindsight."*
+  > *That is Ahead powered by Hindsight: Know what matters before you meet."*

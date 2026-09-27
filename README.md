@@ -1,6 +1,6 @@
-# MEETUP MEMORY
+# Ahead — Know what matters before you meet.
 
-> **The AI Pre-Meeting Brief Agent That Never Forgets What You Promised**  
+> **The AI Pre-Meeting Intelligence Agent That Never Forgets What You Promised**  
 > Built for hackathons & executive prep • Powered by **Hindsight** (`@vectorize-io/hindsight-client`) and **Groq LLM**.
 
 ---
@@ -17,7 +17,7 @@ When preparing for a meeting with a client or prospect, traditional AI assistant
 
 ## 💡 The Solution
 
-**MEETUP MEMORY** is a single-click pre-meeting briefing tool that eliminates conversation amnesia:
+**Ahead** is a single-click pre-meeting briefing tool that eliminates conversation amnesia:
 1. **Side-by-Side Reality Check**: Contrasts a standard memory-less assistant (muted card) against the Hindsight-powered executive brief (highlighted accent card).
 2. **Urgent Commitment Detection**: Explicitly highlights overdue and unfulfilled promises in an amber/red `⚠ Overdue Commitment` callout before you say a single word.
 3. **Strategic Opening Advice**: Gives you direct guidance on what to lead with in the first 60 seconds to restore trust.
@@ -60,7 +60,7 @@ When preparing for a meeting with a client or prospect, traditional AI assistant
 
 ## 🧠 How Hindsight Memory is Used
 
-MEETUP MEMORY directly integrates Hindsight's three core primitives into the executive briefing loop:
+**Ahead** directly integrates Hindsight's three core primitives into the executive briefing loop:
 
 ### 1. `client.retain(bankId, content, options)`
 - **Isolated Memory Banks**: Each contact receives an independent memory bank (e.g. `contact-jordan-reyes`, `contact-elena-vance`, `contact-marcus-chen`).

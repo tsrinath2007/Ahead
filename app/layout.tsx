@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { Brain, Sparkles, Clock, CheckCircle2 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'MEETUP MEMORY | AI Meeting-Prep Agent with Hindsight',
+  title: 'Ahead | Know what matters before you meet.',
   description:
-    'AI meeting-prep agent that remembers past meetings, surfaces overdue promises, and briefs you with context generic assistants forget.',
+    'Ahead is an AI pre-meeting agent powered by Hindsight that surfaces overdue promises and forgotten commitments before you meet.',
 };
 
 export default function RootLayout({
@@ -26,15 +26,15 @@ export default function RootLayout({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                    MEETUP MEMORY
+                  <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-800 bg-clip-text text-transparent">
+                    Ahead
                   </span>
                   <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
                     Hindsight Powered
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium">
-                  AI Pre-Meeting Intelligence & Overdue Commitment Tracker
+                  Know what matters before you meet.
                 </p>
               </div>
             </Link>

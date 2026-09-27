@@ -11,14 +11,14 @@ export default function ContactsPage() {
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold tracking-wide">
             <Sparkles className="w-3.5 h-3.5" />
-            Hackathon Single-Click Meeting Brief Agent
+            Ahead — Know what matters before you meet.
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
             Never Walk Into a Meeting Having Forgotten What You Promised.
           </h1>
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
             Generic AI assistants generate cookie-cutter discovery questions because they have zero recollection of your past interactions. 
-            <strong className="text-white font-semibold"> Meetup Memory</strong> leverages persistent Hindsight memory banks to resurrect past agreements, postponed pricing discussions, and forgotten promises.
+            <strong className="text-white font-semibold"> Ahead</strong> leverages persistent Hindsight memory banks to resurrect past agreements, postponed pricing discussions, and forgotten promises.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-slate-300">
