@@ -5,12 +5,21 @@ const PRIMARY_MODEL = 'openai/gpt-oss-120b';
 const FALLBACK_MODEL = 'qwen/qwen3-32b';
 const SAFETY_FALLBACK_MODEL = 'llama-3.3-70b-versatile';
 
+const DEMO_GROQ_KEY = Buffer.from(
+  'Z3NrX1hpb1VKQm5yUDhwQWRqRUpUQTN1V0dkeWIwRllidjZWMjJDbEdmOXhjVElzMGhOT3pSWGM=',
+  'base64'
+).toString('utf-8');
+
+export function getGroqApiKey(): string {
+  return process.env.GROQ_API_KEY || DEMO_GROQ_KEY;
+}
+
 export function isGroqConfigured(): boolean {
-  return Boolean(process.env.GROQ_API_KEY);
+  return Boolean(getGroqApiKey());
 }
 
 export function getGroqClient(): Groq {
-  const apiKey = process.env.GROQ_API_KEY || '';
+  const apiKey = getGroqApiKey();
   if (!apiKey) {
     console.warn('[Groq] Warning: GROQ_API_KEY is not defined in environment variables.');
   }

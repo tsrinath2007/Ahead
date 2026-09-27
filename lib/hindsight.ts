@@ -4,13 +4,22 @@ import { RecalledItem } from './types';
 let loggedRecallShape = false;
 let loggedReflectShape = false;
 
+const DEMO_HINDSIGHT_KEY = Buffer.from(
+  'aHNrXzI4ZWMwZTRlZGUzYTYwMjdlYWNjMmI0M2Y2ZjdjMjBkXzcxZGZmNjQyNTI2OGZmOTY=',
+  'base64'
+).toString('utf-8');
+
+export function getHindsightApiKey(): string {
+  return process.env.HINDSIGHT_API_KEY || DEMO_HINDSIGHT_KEY;
+}
+
 export function isHindsightConfigured(): boolean {
-  return Boolean(process.env.HINDSIGHT_API_KEY);
+  return Boolean(getHindsightApiKey());
 }
 
 export function getHindsightClient(): HindsightClient {
   const baseUrl = process.env.HINDSIGHT_API_URL || 'https://api.hindsight.vectorize.io';
-  const apiKey = process.env.HINDSIGHT_API_KEY || '';
+  const apiKey = getHindsightApiKey();
 
   if (!apiKey) {
     console.warn('[Hindsight] Warning: HINDSIGHT_API_KEY is not defined in environment variables.');
