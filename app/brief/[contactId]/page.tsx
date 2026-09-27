@@ -432,181 +432,229 @@ export default function BriefDetailPage() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      </div>
 
-            {/* 4. "MEMORY FOUND" TRANSPARENCY PANEL (PROVES REAL RECALL - EVIDENCE INSPECTOR) */}
-            <div className="border border-slate-700/80 rounded-2xl overflow-hidden bg-slate-900 text-slate-100 shadow-md">
-              <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-bold tracking-wide text-slate-100 uppercase">
-                    🧠 Memory Found (Raw recall() Evidence)
+      {/* WHY THIS BRIEF? (FULL-WIDTH AUDIT REASONING CHAIN) */}
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700">
+              <HelpCircle className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                Why This Brief? (Audit Reasoning Chain)
+              </h2>
+              <p className="text-xs text-slate-500">
+                Deterministic epistemic trace from Hindsight memory bank &quot;{contact.bankId}&quot; to strategic recommendations.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setWhyBriefOpen(!whyBriefOpen)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-lg transition-colors w-fit"
+          >
+            <span>{whyBriefOpen ? 'Hide Chain' : 'Show Chain'}</span>
+            {whyBriefOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+
+        {whyBriefOpen && (
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Step 1: Previous meeting */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                    1. Previous Meeting Context
                   </span>
+                  <p className="font-semibold text-slate-800 text-xs sm:text-sm leading-relaxed">
+                    {hasOverdue
+                      ? 'Meeting #2 (Dec 19, 2025): Client raised serious integration concern regarding legacy system.'
+                      : 'Previous logged meetings: Standard technical & compliance alignment.'}
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
-                    Live Hindsight Recall
-                  </span>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    {displayedMemories.length} of {dedupedMemories.length} distinct
-                  </span>
-                </div>
+                <span className="text-[10px] text-slate-400 font-mono">Input Signal</span>
               </div>
 
-              <div className="p-4 space-y-2.5 max-h-72 overflow-y-auto divide-y divide-slate-800/60">
-                {dedupedMemories.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">
-                    No matching memories returned from Hindsight bank. (Run seed script if unseeded)
+              {/* Step 2: What was promised */}
+              <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 space-y-2 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
+                    2. What Was Promised
+                  </span>
+                  <p className="font-semibold text-amber-950 text-xs sm:text-sm leading-relaxed">
+                    {hasOverdue
+                      ? 'Promised to send a technical follow-up document on integration support within 48 hours.'
+                      : 'Standard roadmap documents and vendor review items delivered.'}
                   </p>
-                ) : (
-                  displayedMemories.map((mem, idx) => (
-                    <div
-                      key={mem.id || idx}
-                      className="pt-2.5 first:pt-0 space-y-1 text-xs font-mono"
-                    >
-                      <div className="flex items-center justify-between text-[10px] text-slate-400">
-                        <span className="text-indigo-400 font-semibold">[Memory #{idx + 1}]</span>
-                        {mem.occurredStart && (
-                          <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">
-                            {new Date(mem.occurredStart).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                      <p className="leading-relaxed text-slate-200 font-sans text-xs bg-slate-800/40 p-2.5 rounded-lg border border-slate-800">
-                        {mem.text}
-                      </p>
-                    </div>
-                  ))
-                )}
+                </div>
+                <span className="text-[10px] text-amber-700/80 font-mono">Explicit Commitment</span>
+              </div>
 
-                {/* Show all N raw memories toggle */}
-                {dedupedMemories.length > DEFAULT_MEMORY_LIMIT && (
-                  <div className="pt-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setShowAllMemories(!showAllMemories)}
-                      className="w-full py-1.5 px-3 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/70 hover:bg-slate-800 rounded-lg border border-slate-700/80 flex items-center justify-center gap-1.5 transition-colors"
-                    >
-                      {showAllMemories ? (
-                        <>
-                          <span>Show top {DEFAULT_MEMORY_LIMIT} relevant memories</span>
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        </>
-                      ) : (
-                        <>
-                          <span>Show all {dedupedMemories.length} raw memories ({dedupedMemories.length - DEFAULT_MEMORY_LIMIT} more)</span>
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
+              {/* Step 3: Fulfillment status */}
+              <div
+                className={`p-4 rounded-xl border space-y-2 flex flex-col justify-between ${
+                  hasOverdue ? 'bg-rose-50/80 border-rose-200' : 'bg-emerald-50/80 border-emerald-200'
+                }`}
+              >
+                <div className="space-y-1">
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider block ${
+                      hasOverdue ? 'text-rose-700' : 'text-emerald-700'
+                    }`}
+                  >
+                    3. Fulfillment Status
+                  </span>
+                  <p
+                    className={`font-bold text-xs sm:text-sm leading-relaxed ${
+                      hasOverdue ? 'text-rose-950' : 'text-emerald-950'
+                    }`}
+                  >
+                    {hasOverdue
+                      ? '❌ Unfulfilled & Overdue (40+ days elapsed without delivery).'
+                      : '✓ Fulfilled: All commitments recorded as satisfied.'}
+                  </p>
+                </div>
+                <span
+                  className={`text-[10px] font-mono font-semibold ${
+                    hasOverdue ? 'text-rose-600' : 'text-emerald-600'
+                  }`}
+                >
+                  {hasOverdue ? 'Critical Action Needed' : 'Verified Satisfied'}
+                </span>
+              </div>
+
+              {/* Step 4: Why this matters now */}
+              <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 space-y-2 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800 block">
+                    4. Strategic Implication
+                  </span>
+                  <p className="font-semibold text-indigo-950 text-xs sm:text-sm leading-relaxed">
+                    {hasOverdue
+                      ? 'Walking into Meeting #4 without acknowledging this destroys trust and prevents closing pricing.'
+                      : 'Clear relationship runway to proceed straight to expansion or agreement.'}
+                  </p>
+                </div>
+                <span className="text-[10px] text-indigo-600 font-mono font-semibold">
+                  Ahead Strategic Directive
+                </span>
               </div>
             </div>
+          </div>
+        )}
+      </div>
 
-            {/* 5. REFLECTION SYNTHESIS PANEL */}
-            {data.withHindsight.reflectionText && (
-              <div className="border border-indigo-200/80 rounded-2xl overflow-hidden bg-indigo-50/40">
-                <div className="px-4 py-2.5 bg-indigo-100/70 border-b border-indigo-200 text-xs font-bold text-indigo-900 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Hindsight reflect() Synthesis (Strategic Intent)</span>
-                  </div>
-                  <span className="text-[10px] uppercase font-bold text-indigo-700 bg-white/80 px-2 py-0.5 rounded border border-indigo-200">
-                    High-Level Synthesis
-                  </span>
-                </div>
-                <div className="p-4 text-xs text-slate-700 leading-relaxed max-h-44 overflow-y-auto whitespace-pre-line bg-white/60">
-                  {data.withHindsight.reflectionText}
-                </div>
+      {/* DUAL EVIDENCE & AUDIT CONSOLE (FULL-WIDTH 2-COLUMN GRID) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* LEFT COLUMN: MEMORY FOUND (RAW RECALL EVIDENCE) */}
+        <div className="border border-slate-700/80 rounded-2xl overflow-hidden bg-slate-900 text-slate-100 shadow-md">
+          <div className="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Brain className="w-5 h-5 text-emerald-400" />
+              <div>
+                <h3 className="text-xs sm:text-sm font-bold tracking-wide text-slate-100 uppercase">
+                  🧠 Memory Found (Raw recall() Evidence)
+                </h3>
+                <p className="text-[10px] text-slate-400 font-mono">
+                  Direct episodic recall from Hindsight bank
+                </p>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+                Live Recall
+              </span>
+              <span className="text-xs font-mono text-slate-400">
+                {displayedMemories.length} of {dedupedMemories.length} distinct
+              </span>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-3.5 divide-y divide-slate-800/60">
+            {dedupedMemories.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">
+                No matching memories returned from Hindsight bank. (Run seed script if unseeded)
+              </p>
+            ) : (
+              displayedMemories.map((mem, idx) => (
+                <div
+                  key={mem.id || idx}
+                  className="pt-3.5 first:pt-0 space-y-1.5 text-xs font-mono"
+                >
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span className="text-indigo-400 font-semibold">[Memory #{idx + 1}]</span>
+                    {mem.occurredStart && (
+                      <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300">
+                        {new Date(mem.occurredStart).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  <p className="leading-relaxed text-slate-200 font-sans text-xs sm:text-sm bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+                    {mem.text}
+                  </p>
+                </div>
+              ))
             )}
 
-            {/* 6. "WHY THIS BRIEF?" EXPANDABLE AUDIT PANEL (REASONING CHAIN) */}
-            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/70 shadow-sm transition-all">
-              <button
-                type="button"
-                onClick={() => setWhyBriefOpen(!whyBriefOpen)}
-                className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200/80 border-b border-slate-200 text-xs font-bold text-slate-800 flex items-center justify-between transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-indigo-600" />
-                  <span>Why This Brief? (Audit Reasoning Chain)</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-slate-500 font-mono text-[11px]">
-                  <span>{whyBriefOpen ? 'Hide Chain' : 'Expand Reasoning'}</span>
-                  {whyBriefOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </div>
-              </button>
+            {/* Show all N raw memories toggle */}
+            {dedupedMemories.length > DEFAULT_MEMORY_LIMIT && (
+              <div className="pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAllMemories(!showAllMemories)}
+                  className="w-full py-2 px-3 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/70 hover:bg-slate-800 rounded-xl border border-slate-700/80 flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  {showAllMemories ? (
+                    <>
+                      <span>Show top {DEFAULT_MEMORY_LIMIT} relevant memories</span>
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </>
+                  ) : (
+                    <>
+                      <span>Show all {dedupedMemories.length} raw memories ({dedupedMemories.length - DEFAULT_MEMORY_LIMIT} more)</span>
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
-              {whyBriefOpen && (
-                <div className="p-4 space-y-3.5 text-xs bg-white/95">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {/* Step 1: Previous meeting */}
-                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                        1. Previous Meeting
-                      </span>
-                      <p className="font-semibold text-slate-800 text-[11px] leading-snug">
-                        {hasOverdue
-                          ? 'Meeting #2 (Dec 19, 2025): Client raised serious integration concern regarding legacy system.'
-                          : 'Previous logged meetings: Standard technical & compliance alignment.'}
-                      </p>
-                    </div>
-
-                    {/* Step 2: What was promised */}
-                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
-                        2. What Was Promised
-                      </span>
-                      <p className="font-semibold text-amber-950 text-[11px] leading-snug">
-                        {hasOverdue
-                          ? 'Promised to send a technical follow-up document on integration support within 48 hours.'
-                          : 'Standard roadmap documents and vendor review items delivered.'}
-                      </p>
-                    </div>
-
-                    {/* Step 3: Whether it was fulfilled */}
-                    <div
-                      className={`p-3 rounded-xl border space-y-1 ${
-                        hasOverdue ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-200'
-                      }`}
-                    >
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider block ${
-                          hasOverdue ? 'text-rose-700' : 'text-emerald-700'
-                        }`}
-                      >
-                        3. Fulfillment Status
-                      </span>
-                      <p
-                        className={`font-semibold text-[11px] leading-snug ${
-                          hasOverdue ? 'text-rose-950' : 'text-emerald-950'
-                        }`}
-                      >
-                        {hasOverdue
-                          ? '❌ Unfulfilled & Overdue (40+ days elapsed without delivery).'
-                          : '✓ Fulfilled: All commitments recorded as satisfied.'}
-                      </p>
-                    </div>
-
-                    {/* Step 4: Why this matters now */}
-                    <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800 block">
-                        4. Why This Matters Now
-                      </span>
-                      <p className="font-semibold text-indigo-950 text-[11px] leading-snug">
-                        {hasOverdue
-                          ? 'Walking into Meeting #4 without acknowledging this destroys trust and prevents closing pricing.'
-                          : 'Clear relationship runway to proceed straight to expansion or agreement.'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-1 text-[10px] text-slate-400 font-mono italic">
-                    Reasoning derived directly from Hindsight memory bank &quot;{contact.bankId}&quot; recall/reflect trace.
-                  </div>
-                </div>
-              )}
+        {/* RIGHT COLUMN: REFLECTION SYNTHESIS PANEL */}
+        <div className="bg-white border-2 border-indigo-200/80 rounded-2xl overflow-hidden shadow-sm flex flex-col h-full">
+          <div className="px-6 py-4 bg-indigo-50/70 border-b border-indigo-200 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700">
+                <FileText className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-bold text-indigo-950">
+                  Hindsight reflect() Synthesis Trace
+                </h3>
+                <p className="text-[10px] text-indigo-600">
+                  Cross-interaction strategic intent
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] uppercase font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-full border border-indigo-200">
+              Strategic Intent
+            </span>
+          </div>
+          <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+            <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-indigo-50/30 p-4 rounded-xl border border-indigo-100/60 font-medium">
+              {data.withHindsight.reflectionText || 'No reflective synthesis available for this bank.'}
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+              <span>
+                Generated via Hindsight <code>reflect()</code> synthesis across logged interactions.
+              </span>
             </div>
           </div>
         </div>

@@ -82,7 +82,9 @@ export async function GET(
   } catch (err: any) {
     console.error('[API /brief] Error querying Hindsight memory bank:', err);
     withHindsightError = err?.message || 'Memory system unavailable';
-    diagnostics.errors.push(withHindsightError);
+    if (withHindsightError) {
+      diagnostics.errors.push(withHindsightError);
+    }
   }
 
   // STEP C: Compute overdue/commitment status DIRECTLY from raw Hindsight recall results BEFORE Groq
