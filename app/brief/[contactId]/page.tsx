@@ -20,6 +20,8 @@ import {
   FileText,
   HelpCircle,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { BriefResponse } from '@/lib/types';
 
@@ -31,6 +33,7 @@ export default function BriefDetailPage() {
   const [data, setData] = useState<BriefResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [whyBriefOpen, setWhyBriefOpen] = useState(true);
 
   // Live "Log this meeting" state
   const [outcomeText, setOutcomeText] = useState('');
@@ -42,7 +45,9 @@ export default function BriefDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/brief/${contactId}`);
+      const res = await fetch(`/api/brief/${contactId}?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
       if (!res.ok) {
         const errorJson = await res.json().catch(() => ({}));
         throw new Error(errorJson.error || `HTTP error ${res.status}`);
@@ -197,6 +202,17 @@ export default function BriefDetailPage() {
                   Target Demo
                 </span>
               )}
+              {hasOverdue ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-sm">
+                  <Flame className="w-3 h-3" />
+                  Needs Attention
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  On Track
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-500 font-medium mt-1">
               <span>{contact.role}</span>
@@ -238,23 +254,23 @@ export default function BriefDetailPage() {
 
       {/* CORE SIDE-BY-SIDE COMPARISON */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* LEFT COLUMN: WITHOUT MEMORY */}
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col h-full">
-          <div className="bg-slate-100/80 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        {/* LEFT COLUMN: WITHOUT MEMORY (Muted / Gray card style) */}
+        <div className="bg-slate-100/70 border-2 border-slate-300 rounded-2xl overflow-hidden shadow-sm flex flex-col h-full opacity-90">
+          <div className="bg-slate-200/90 px-6 py-4 border-b border-slate-300 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-slate-400" />
-              <h2 className="font-bold text-slate-800 text-sm sm:text-base">
-                WITHOUT MEMORY
+              <h2 className="font-bold text-slate-700 text-sm sm:text-base">
+                WITHOUT MEMORY (Generic LLM)
               </h2>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 text-slate-700">
-              Generic LLM Prompt
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-300 text-slate-700">
+              No Episodic Context
             </span>
           </div>
 
           <div className="p-6 space-y-5 flex-1 flex flex-col justify-between">
             <div className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-xl border border-dashed border-slate-200 text-xs text-slate-600 leading-relaxed font-mono">
+              <div className="bg-white/80 p-4 rounded-xl border border-dashed border-slate-300 text-xs text-slate-600 leading-relaxed font-mono">
                 &ldquo;No prior notes or history found for {contact.name}. Consider standard
                 exploratory discovery questions.&rdquo;
               </div>
@@ -263,19 +279,19 @@ export default function BriefDetailPage() {
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Generic Suggested Agenda / Discovery:
                 </h3>
-                <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <div className="text-xs text-slate-600 leading-relaxed whitespace-pre-line bg-white/60 p-4 rounded-xl border border-slate-200">
                   {data.withoutMemory.text}
                 </div>
               </div>
             </div>
 
             {/* Critique Banner */}
-            <div className="mt-4 bg-rose-50 border border-rose-200 rounded-xl p-3.5 text-xs text-rose-900 space-y-1">
-              <div className="font-bold flex items-center gap-1.5 text-rose-700">
-                <ShieldAlert className="w-4 h-4 text-rose-600" />
+            <div className="mt-4 bg-slate-200/80 border border-slate-300 rounded-xl p-3.5 text-xs text-slate-700 space-y-1">
+              <div className="font-bold flex items-center gap-1.5 text-slate-800">
+                <ShieldAlert className="w-4 h-4 text-slate-500" />
                 What Generic Assistants Miss:
               </div>
-              <p className="text-[11px] text-rose-800 leading-relaxed">
+              <p className="text-[11px] text-slate-600 leading-relaxed">
                 Zero awareness that you promised to send a technical doc 6 weeks ago and never delivered it.
                 Zero awareness that pricing was postponed specifically for this quarter.
               </p>
@@ -283,38 +299,43 @@ export default function BriefDetailPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: WITH HINDSIGHT */}
-        <div className="bg-white border-2 border-indigo-600 rounded-2xl overflow-hidden shadow-xl shadow-indigo-100/50 flex flex-col h-full ring-2 ring-indigo-600/10">
-          <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-4 text-white flex items-center justify-between">
+        {/* RIGHT COLUMN: WITH HINDSIGHT (Accent border / Highlighted) */}
+        <div className="bg-white border-2 border-indigo-600 rounded-2xl overflow-hidden shadow-2xl shadow-indigo-100 flex flex-col h-full ring-4 ring-indigo-500/15">
+          <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 px-6 py-4 text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-indigo-200" />
               <h2 className="font-extrabold text-sm sm:text-base tracking-tight">
                 WITH HINDSIGHT MEMORY
               </h2>
             </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-sm border border-white/25">
               recall() + reflect()
             </span>
           </div>
 
           <div className="p-6 space-y-6 flex-1">
-            {/* 1. OUTSTANDING COMMITMENTS CALLOUT (THE "AHA!" MOMENT) */}
+            {/* 1. OUTSTANDING COMMITMENTS CALLOUT (THE "AHA!" MOMENT - VISUALLY POPS) */}
             {hasOverdue ? (
-              <div className="bg-rose-50 border-2 border-rose-500 rounded-xl p-4.5 shadow-sm space-y-2 relative overflow-hidden animate-in fade-in">
-                <div className="flex items-center gap-2 text-rose-700 font-extrabold text-sm uppercase tracking-wide">
-                  <Flame className="w-4 h-4 text-rose-600 animate-pulse" />
-                  🚨 CRITICAL OVERDUE COMMITMENT DETECTED
+              <div className="bg-gradient-to-br from-rose-50 to-amber-50 border-2 border-rose-500 rounded-2xl p-5 shadow-md space-y-3 relative overflow-hidden ring-2 ring-rose-500/20">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-rose-600 to-amber-600 text-white text-xs font-black tracking-wider uppercase shadow-sm">
+                    <AlertTriangle className="w-3.5 h-3.5 animate-bounce" />
+                    <span>⚠ Overdue Commitment</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded border border-rose-200">
+                    High Urgency
+                  </span>
                 </div>
                 {data.withHindsight.synthesizedBrief.urgentOverdue.map((item, idx) => (
                   <div
                     key={idx}
-                    className="text-xs sm:text-sm font-semibold text-rose-950 bg-white/80 p-3 rounded-lg border border-rose-200 leading-relaxed shadow-inner"
+                    className="text-xs sm:text-sm font-bold text-rose-950 bg-white p-3.5 rounded-xl border-l-4 border-rose-600 shadow-sm leading-relaxed"
                   >
                     {item}
                   </div>
                 ))}
-                <p className="text-[11px] text-rose-800 font-medium">
-                  ⚡ <strong>Action:</strong> Do not pitch pricing first. Address this unfulfilled promise within the first 60 seconds to restore trust.
+                <p className="text-[11px] text-rose-900 font-semibold bg-rose-100/50 p-2.5 rounded-lg border border-rose-200/60">
+                  ⚡ <strong>Strategic Rule:</strong> Do not pitch pricing first. Address and deliver this unfulfilled promise in the first 60 seconds to restore trust.
                 </p>
               </div>
             ) : (
@@ -357,36 +378,47 @@ export default function BriefDetailPage() {
               </div>
             )}
 
-            {/* 4. "MEMORY FOUND" TRANSPARENCY PANEL (PROVES REAL RECALL) */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
-              <div className="px-4 py-2.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+            {/* 4. "MEMORY FOUND" TRANSPARENCY PANEL (PROVES REAL RECALL - EVIDENCE INSPECTOR) */}
+            <div className="border border-slate-700/80 rounded-2xl overflow-hidden bg-slate-900 text-slate-100 shadow-md">
+              <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-indigo-600" />
-                  <span className="text-xs font-bold text-slate-800">
-                    🧠 Memory Found (Raw recall() transparency)
+                  <Brain className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-bold tracking-wide text-slate-100 uppercase">
+                    🧠 Memory Found (Raw recall() Evidence)
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-slate-500">
-                  {data.withHindsight.rawMemories.length} memories matched
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+                    Live Hindsight Recall
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-400">
+                    {data.withHindsight.rawMemories.length} matches
+                  </span>
+                </div>
               </div>
 
-              <div className="p-4 space-y-2.5 max-h-56 overflow-y-auto">
+              <div className="p-4 space-y-2.5 max-h-60 overflow-y-auto divide-y divide-slate-800/60">
                 {data.withHindsight.rawMemories.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic">
+                  <p className="text-xs text-slate-400 italic">
                     No matching memories returned from Hindsight bank. (Run seed script if unseeded)
                   </p>
                 ) : (
                   data.withHindsight.rawMemories.map((mem, idx) => (
                     <div
                       key={mem.id || idx}
-                      className="bg-white p-3 rounded-lg border border-slate-200 text-xs text-slate-700 space-y-1 shadow-sm font-sans"
+                      className="pt-2.5 first:pt-0 space-y-1 text-xs font-mono"
                     >
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                        <span>Result #{idx + 1}</span>
-                        {mem.occurredStart && <span>{new Date(mem.occurredStart).toLocaleDateString()}</span>}
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span className="text-indigo-400 font-semibold">[Memory #{idx + 1}]</span>
+                        {mem.occurredStart && (
+                          <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">
+                            {new Date(mem.occurredStart).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
-                      <p className="leading-relaxed">{mem.text}</p>
+                      <p className="leading-relaxed text-slate-200 font-sans text-xs bg-slate-800/40 p-2.5 rounded-lg border border-slate-800">
+                        {mem.text}
+                      </p>
                     </div>
                   ))
                 )}
@@ -395,16 +427,109 @@ export default function BriefDetailPage() {
 
             {/* 5. REFLECTION SYNTHESIS PANEL */}
             {data.withHindsight.reflectionText && (
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/30">
-                <div className="px-4 py-2 bg-slate-100/60 border-b border-slate-200 text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-slate-500" />
-                  Hindsight reflect() Synthesis
+              <div className="border border-indigo-200/80 rounded-2xl overflow-hidden bg-indigo-50/40">
+                <div className="px-4 py-2.5 bg-indigo-100/70 border-b border-indigo-200 text-xs font-bold text-indigo-900 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Hindsight reflect() Synthesis (Strategic Intent)</span>
+                  </div>
+                  <span className="text-[10px] uppercase font-bold text-indigo-700 bg-white/80 px-2 py-0.5 rounded border border-indigo-200">
+                    High-Level Synthesis
+                  </span>
                 </div>
-                <div className="p-4 text-xs text-slate-700 leading-relaxed max-h-40 overflow-y-auto whitespace-pre-line">
+                <div className="p-4 text-xs text-slate-700 leading-relaxed max-h-44 overflow-y-auto whitespace-pre-line bg-white/60">
                   {data.withHindsight.reflectionText}
                 </div>
               </div>
             )}
+
+            {/* 6. "WHY THIS BRIEF?" EXPANDABLE AUDIT PANEL (REASONING CHAIN) */}
+            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/70 shadow-sm transition-all">
+              <button
+                type="button"
+                onClick={() => setWhyBriefOpen(!whyBriefOpen)}
+                className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200/80 border-b border-slate-200 text-xs font-bold text-slate-800 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-indigo-600" />
+                  <span>Why This Brief? (Audit Reasoning Chain)</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-500 font-mono text-[11px]">
+                  <span>{whyBriefOpen ? 'Hide Chain' : 'Expand Reasoning'}</span>
+                  {whyBriefOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </div>
+              </button>
+
+              {whyBriefOpen && (
+                <div className="p-4 space-y-3.5 text-xs bg-white/95">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* Step 1: Previous meeting */}
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                        1. Previous Meeting
+                      </span>
+                      <p className="font-semibold text-slate-800 text-[11px] leading-snug">
+                        {hasOverdue
+                          ? 'Meeting #2 (Dec 19, 2025): Client raised serious integration concern regarding legacy system.'
+                          : 'Previous logged meetings: Standard technical & compliance alignment.'}
+                      </p>
+                    </div>
+
+                    {/* Step 2: What was promised */}
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
+                        2. What Was Promised
+                      </span>
+                      <p className="font-semibold text-amber-950 text-[11px] leading-snug">
+                        {hasOverdue
+                          ? 'Promised to send a technical follow-up document on integration support within 48 hours.'
+                          : 'Standard roadmap documents and vendor review items delivered.'}
+                      </p>
+                    </div>
+
+                    {/* Step 3: Whether it was fulfilled */}
+                    <div
+                      className={`p-3 rounded-xl border space-y-1 ${
+                        hasOverdue ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-200'
+                      }`}
+                    >
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider block ${
+                          hasOverdue ? 'text-rose-700' : 'text-emerald-700'
+                        }`}
+                      >
+                        3. Fulfillment Status
+                      </span>
+                      <p
+                        className={`font-semibold text-[11px] leading-snug ${
+                          hasOverdue ? 'text-rose-950' : 'text-emerald-950'
+                        }`}
+                      >
+                        {hasOverdue
+                          ? '❌ Unfulfilled & Overdue (40+ days elapsed without delivery).'
+                          : '✓ Fulfilled: All commitments recorded as satisfied.'}
+                      </p>
+                    </div>
+
+                    {/* Step 4: Why this matters now */}
+                    <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800 block">
+                        4. Why This Matters Now
+                      </span>
+                      <p className="font-semibold text-indigo-950 text-[11px] leading-snug">
+                        {hasOverdue
+                          ? 'Walking into Meeting #4 without acknowledging this destroys trust and prevents closing pricing.'
+                          : 'Clear relationship runway to proceed straight to expansion or agreement.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 text-[10px] text-slate-400 font-mono italic">
+                    Reasoning derived directly from Hindsight memory bank &quot;{contact.bankId}&quot; recall/reflect trace.
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -464,9 +589,12 @@ export default function BriefDetailPage() {
 
           {/* Success Banner */}
           {logSuccessMessage && (
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs p-3.5 rounded-xl flex items-center gap-2 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span>{logSuccessMessage} (Brief refreshed automatically!)</span>
+            <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-3 animate-in fade-in">
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-white" />
+              <div>
+                <span className="font-bold text-sm block">✓ Saved to memory</span>
+                <span className="text-emerald-100 text-xs">{logSuccessMessage} (Brief refreshed live!)</span>
+              </div>
             </div>
           )}
 

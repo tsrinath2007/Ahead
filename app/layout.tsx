@@ -48,6 +48,12 @@ export default function RootLayout({
                 <span>Hindsight Bank Active</span>
               </div>
               <Link
+                href="/commitments"
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors flex items-center gap-1.5"
+              >
+                <span>Commitments Dashboard</span>
+              </Link>
+              <Link
                 href="/"
                 className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors"
               >

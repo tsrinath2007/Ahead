@@ -5,6 +5,7 @@ import { generateGenericBrief, generateHindsightBrief, isGroqConfigured } from '
 import { BriefResponse, RecalledItem } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(
   request: NextRequest,
@@ -70,7 +71,7 @@ export async function GET(
     }
 
     // Step A: recall() raw matching memories
-    const query = `What outstanding commitments, technical docs, integration concerns, or pricing discussions occurred in past meetings with ${contact.name}?`;
+    const query = `What outstanding commitments, technical docs, integration concerns, latest meeting outcomes, or pricing discussions occurred in past meetings with ${contact.name}?`;
     recalledItems = await recallMemories(contact.bankId, query);
 
     // Step B: reflect() over memories to determine strategic focus
@@ -122,5 +123,9 @@ export async function GET(
     diagnostics,
   };
 
-  return NextResponse.json(responsePayload);
+  return NextResponse.json(responsePayload, {
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+    },
+  });
 }

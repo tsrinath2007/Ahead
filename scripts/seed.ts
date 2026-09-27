@@ -47,6 +47,8 @@ async function main() {
       console.log(`  ⏳ Retaining Meeting #${idx + 1} (${meeting.date}): "${meeting.summary}"...`);
       try {
         await client.retain(contact.bankId, meeting.content, {
+          documentId: `${contact.bankId}-meeting-${idx + 1}`,
+          updateMode: 'replace',
           context: `Past Meeting (${meeting.date}): ${meeting.summary}`,
           timestamp: new Date(meeting.date).toISOString(),
         });

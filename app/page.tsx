@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { SEEDED_CONTACTS } from '@/lib/contacts';
-import { Brain, ArrowRight, Sparkles, AlertCircle, History, Building2, User } from 'lucide-react';
+import { Brain, ArrowRight, Sparkles, AlertCircle, History, Building2, User, CheckCircle2, Flame } from 'lucide-react';
 
 export default function ContactsPage() {
   return (
@@ -48,7 +48,16 @@ export default function ContactsPage() {
             <User className="w-5 h-5 text-indigo-600" />
             Seeded Contacts & Memory Banks
           </h2>
-          <span className="text-xs text-slate-500 font-medium">3 Active Banks</span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/commitments"
+              className="text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+            >
+              <span>View Commitments Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <span className="text-xs text-slate-500 font-medium hidden sm:inline">3 Active Banks</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -64,8 +73,8 @@ export default function ContactsPage() {
                 }`}
               >
                 {isDemo && (
-                  <div className="absolute -top-3 left-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[11px] font-bold px-3 py-0.5 rounded-full shadow-sm tracking-wide uppercase">
-                    ⭐ Recommended Demo Contact
+                  <div className="absolute -top-3 left-4 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 text-white text-[11px] font-black px-3.5 py-0.5 rounded-full shadow-md tracking-wider uppercase flex items-center gap-1.5 ring-2 ring-white">
+                    <span>⭐ Try this one (Hero Demo)</span>
                   </div>
                 )}
 
@@ -89,6 +98,19 @@ export default function ContactsPage() {
                         <p className="text-xs text-slate-500 font-medium">{contact.role}</p>
                       </div>
                     </div>
+
+                    {/* Relationship Health Badge */}
+                    {contact.meetings.some((m) => m.hasOutstandingCommitment) ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-sm ring-1 ring-rose-300">
+                        <Flame className="w-3 h-3" />
+                        Needs Attention
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        On Track
+                      </span>
+                    )}
                   </div>
 
                   <div className="space-y-2 text-xs">
