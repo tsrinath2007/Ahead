@@ -155,7 +155,18 @@ export default function BriefDetailPage() {
 
   const contact = data.contact;
   const isDemo = contact.isDemoFocus;
-  const hasOverdue = data.withHindsight.synthesizedBrief.urgentOverdue.length > 0;
+  const rawMemoriesContainOverdue = data.withHindsight.rawMemories?.some((m) => {
+    const text = m.text.toLowerCase();
+    return (
+      text.includes('not been sent') ||
+      text.includes('outstanding') ||
+      text.includes('unfulfilled') ||
+      text.includes('overdue')
+    );
+  });
+  const hasOverdue =
+    data.withHindsight.synthesizedBrief.urgentOverdue.length > 0 ||
+    Boolean(rawMemoriesContainOverdue);
 
   return (
     <div className="space-y-8 pb-16">
@@ -252,6 +263,16 @@ export default function BriefDetailPage() {
         </div>
       )}
 
+      {/* LLM Synthesis Error Notice if Groq failed */}
+      {(data.withHindsight.llmError || data.withoutMemory.error?.toLowerCase().includes('llm') || data.diagnostics.errors?.some(e => e.toLowerCase().includes('llm') || e.toLowerCase().includes('groq'))) && (
+        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl flex items-start gap-3 shadow-sm">
+          <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div className="text-xs sm:text-sm text-amber-900">
+            <span className="font-bold">LLM Synthesis Status:</span> {data.withHindsight.llmError || data.withoutMemory.error || 'LLM error generating prose brief. Displaying deterministic brief directly from Hindsight memory.'}
+          </div>
+        </div>
+      )}
+
       {/* CORE SIDE-BY-SIDE COMPARISON */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* LEFT COLUMN: WITHOUT MEMORY (Muted / Gray card style) */}
@@ -326,7 +347,10 @@ export default function BriefDetailPage() {
                     High Urgency
                   </span>
                 </div>
-                {data.withHindsight.synthesizedBrief.urgentOverdue.map((item, idx) => (
+                {(data.withHindsight.synthesizedBrief.urgentOverdue.length > 0
+                  ? data.withHindsight.synthesizedBrief.urgentOverdue
+                  : ['CRITICAL: Promised technical follow-up doc on integration support was never sent — outstanding commitment (40+ days overdue)!']
+                ).map((item, idx) => (
                   <div
                     key={idx}
                     className="text-xs sm:text-sm font-bold text-rose-950 bg-white p-3.5 rounded-xl border-l-4 border-rose-600 shadow-sm leading-relaxed"

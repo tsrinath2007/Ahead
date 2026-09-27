@@ -41,6 +41,7 @@ export interface BriefResponse {
     };
     modelUsed: string;
     error?: string | null;
+    llmError?: string | null;
   };
   diagnostics: {
     hindsightBankId: string;

@@ -18,8 +18,8 @@ export function isGroqConfigured(): boolean {
   return Boolean(getGroqApiKey());
 }
 
-export function getGroqClient(): Groq {
-  const apiKey = getGroqApiKey();
+export function getGroqClient(apiKeyOverride?: string): Groq {
+  const apiKey = apiKeyOverride || getGroqApiKey();
   if (!apiKey) {
     console.warn('[Groq] Warning: GROQ_API_KEY is not defined in environment variables.');
   }
@@ -29,8 +29,12 @@ export function getGroqClient(): Groq {
 /**
  * Executes a chat completion with automatic fallback on error/timeout
  */
-async function callGroqWithFallback(messages: any[], temperature = 0.2): Promise<{ text: string; model: string }> {
-  const groq = getGroqClient();
+async function callGroqWithFallback(
+  messages: any[],
+  temperature = 0.2,
+  apiKeyOverride?: string
+): Promise<{ text: string; model: string }> {
+  const groq = getGroqClient(apiKeyOverride);
 
   // Try Primary Model
   try {
@@ -86,7 +90,10 @@ async function callGroqWithFallback(messages: any[], temperature = 0.2): Promise
 /**
  * WITHOUT MEMORY: Generic, context-free pre-meeting suggestion
  */
-export async function generateGenericBrief(contact: Contact): Promise<{ text: string; model: string }> {
+export async function generateGenericBrief(
+  contact: Contact,
+  apiKeyOverride?: string
+): Promise<{ text: string; model: string }> {
   const messages = [
     {
       role: 'system',
@@ -98,7 +105,7 @@ export async function generateGenericBrief(contact: Contact): Promise<{ text: st
     },
   ];
 
-  return callGroqWithFallback(messages, 0.4);
+  return callGroqWithFallback(messages, 0.4, apiKeyOverride);
 }
 
 /**
@@ -107,7 +114,8 @@ export async function generateGenericBrief(contact: Contact): Promise<{ text: st
 export async function generateHindsightBrief(
   contact: Contact,
   rawMemories: RecalledItem[],
-  reflectionText: string
+  reflectionText: string,
+  apiKeyOverride?: string
 ): Promise<{
   synthesizedBrief: {
     urgentOverdue: string[];
@@ -158,7 +166,7 @@ ${reflectionText || 'No reflection synthesis available.'}
     },
   ];
 
-  const { text, model } = await callGroqWithFallback(messages, 0.1);
+  const { text, model } = await callGroqWithFallback(messages, 0.1, apiKeyOverride);
 
   // Parse JSON response
   let cleaned = text.trim();
