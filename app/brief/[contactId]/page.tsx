@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Calendar,
   Building2,
+  Users,
   Send,
   RefreshCw,
   Sparkles,
@@ -24,6 +25,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { BriefResponse } from '@/lib/types';
+import { MarkdownContent } from '@/components/MarkdownContent';
 
 export default function BriefDetailPage() {
   const params = useParams();
@@ -322,17 +324,16 @@ export default function BriefDetailPage() {
 
           <div className="p-6 space-y-5 flex-1 flex flex-col justify-between">
             <div className="space-y-4">
-              <div className="bg-white/80 p-4 rounded-xl border border-dashed border-slate-300 text-xs text-slate-600 leading-relaxed font-mono">
-                &ldquo;No prior notes or history found for {contact.name}. Consider standard
-                exploratory discovery questions.&rdquo;
+              <div className="bg-white/90 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 leading-relaxed italic">
+                &ldquo;No prior notes or history found for {contact.name}. Generating baseline exploratory discovery questions.&rdquo;
               </div>
 
               <div className="space-y-2">
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Generic Suggested Agenda / Discovery:
                 </h3>
-                <div className="text-xs text-slate-600 leading-relaxed whitespace-pre-line bg-white/60 p-4 rounded-xl border border-slate-200">
-                  {data.withoutMemory.text}
+                <div className="text-xs text-slate-600 leading-relaxed bg-white/80 p-4 rounded-xl border border-slate-200">
+                  <MarkdownContent content={data.withoutMemory.text} />
                 </div>
               </div>
             </div>
@@ -429,6 +430,19 @@ export default function BriefDetailPage() {
                 </div>
                 <p className="text-xs text-indigo-950 font-medium leading-relaxed bg-white/80 p-3 rounded-lg border border-indigo-100">
                   {data.withHindsight.synthesizedBrief.strategicLead}
+                </p>
+              </div>
+            )}
+
+            {/* 4. EXECUTIVE SUMMARY CONTEXT */}
+            {data.withHindsight.synthesizedBrief.summary && (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-slate-800 font-bold text-xs uppercase tracking-wider">
+                  <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                  Executive Relationship Summary:
+                </div>
+                <p className="text-xs text-slate-700 leading-relaxed bg-white p-3 rounded-lg border border-slate-200 font-medium">
+                  {data.withHindsight.synthesizedBrief.summary}
                 </p>
               </div>
             )}
@@ -575,30 +589,64 @@ export default function BriefDetailPage() {
             </div>
           </div>
 
-          <div className="p-6 space-y-3.5 divide-y divide-slate-800/60">
+          <div className="p-6 space-y-4 divide-y divide-slate-800/80">
             {dedupedMemories.length === 0 ? (
               <p className="text-xs text-slate-400 italic">
                 No matching memories returned from Hindsight bank. (Run seed script if unseeded)
               </p>
             ) : (
-              displayedMemories.map((mem, idx) => (
-                <div
-                  key={mem.id || idx}
-                  className="pt-3.5 first:pt-0 space-y-1.5 text-xs font-mono"
-                >
-                  <div className="flex items-center justify-between text-[11px] text-slate-400">
-                    <span className="text-indigo-400 font-semibold">[Memory #{idx + 1}]</span>
-                    {mem.occurredStart && (
-                      <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300">
-                        {new Date(mem.occurredStart).toLocaleDateString()}
+              displayedMemories.map((mem, idx) => {
+                const parts = mem.text.split('|').map((s) => s.trim());
+                const mainStatement = parts[0] || mem.text;
+                const whenPart = parts.find((p) => p.startsWith('When:'))?.replace('When:', '').trim();
+                const involvingPart = parts.find((p) => p.startsWith('Involving:'))?.replace('Involving:', '').trim();
+                const extraNote = parts.slice(1).find((p) => !p.startsWith('When:') && !p.startsWith('Involving:'));
+
+                return (
+                  <div
+                    key={mem.id || idx}
+                    className="pt-4 first:pt-0 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span className="text-indigo-400 font-bold font-mono text-[10px] uppercase tracking-wider">
+                        Memory #{idx + 1}
                       </span>
+                      {mem.occurredStart && (
+                        <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-mono text-[10px]">
+                          Logged: {new Date(mem.occurredStart).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="leading-relaxed text-slate-100 font-sans text-xs sm:text-sm bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/80 font-medium">
+                      {mainStatement}
+                    </p>
+
+                    {/* Clean Metadata Badges instead of raw pipe characters */}
+                    {(whenPart || involvingPart || extraNote) && (
+                      <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                        {whenPart && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-slate-800/90 text-indigo-300 px-2.5 py-0.5 rounded-md border border-slate-700">
+                            <Calendar className="w-3 h-3 text-indigo-400" />
+                            {whenPart}
+                          </span>
+                        )}
+                        {involvingPart && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-slate-800/90 text-slate-300 px-2.5 py-0.5 rounded-md border border-slate-700">
+                            <Users className="w-3 h-3 text-slate-400" />
+                            {involvingPart}
+                          </span>
+                        )}
+                        {extraNote && (
+                          <span className="text-[10px] text-slate-400 font-sans">
+                            • {extraNote}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                  <p className="leading-relaxed text-slate-200 font-sans text-xs sm:text-sm bg-slate-800/40 p-3 rounded-xl border border-slate-800">
-                    {mem.text}
-                  </p>
-                </div>
-              ))
+                );
+              })
             )}
 
             {/* Show all N raw memories toggle */}
@@ -647,8 +695,8 @@ export default function BriefDetailPage() {
             </span>
           </div>
           <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-            <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-indigo-50/30 p-4 rounded-xl border border-indigo-100/60 font-medium">
-              {data.withHindsight.reflectionText || 'No reflective synthesis available for this bank.'}
+            <div className="bg-indigo-50/30 p-5 rounded-2xl border border-indigo-100/70">
+              <MarkdownContent content={data.withHindsight.reflectionText || 'No reflective synthesis available for this bank.'} />
             </div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" />

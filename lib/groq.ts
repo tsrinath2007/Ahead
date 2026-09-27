@@ -97,15 +97,16 @@ export async function generateGenericBrief(
   const messages = [
     {
       role: 'system',
-      content: 'You are an executive meeting assistant. You provide concise pre-meeting preparation notes. When you have no history or past meeting records for a contact, state that clearly and suggest standard discovery questions.',
+      content:
+        'You are an executive meeting assistant with no prior interaction history for this contact. Generate a concise, clean discovery agenda (3-4 bullet points) covering standard introductory topics like company priorities, operational goals, and evaluation criteria. Keep it brief, professional, and directly actionable. Do not include markdown tables, checklists, or long boilerplate sections.',
     },
     {
       role: 'user',
-      content: `I have an upcoming meeting with ${contact.name}, who is ${contact.role} at ${contact.company}. I do not have access to any previous notes or meeting memory for this contact. Generate a standard pre-meeting brief.`,
+      content: `Create a brief exploratory discovery outline for an introductory meeting with ${contact.name}, ${contact.role} at ${contact.company}. Note that no prior notes exist.`,
     },
   ];
 
-  return callGroqWithFallback(messages, 0.4, apiKeyOverride);
+  return callGroqWithFallback(messages, 0.3, apiKeyOverride);
 }
 
 /**
