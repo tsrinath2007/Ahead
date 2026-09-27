@@ -1,0 +1,98 @@
+import { Contact, MeetingMemoryRecord } from './types';
+
+export const SEEDED_CONTACTS: (Contact & { meetings: MeetingMemoryRecord[] })[] = [
+  {
+    id: "jordan-reyes",
+    name: "Jordan Reyes",
+    role: "VP of Operations",
+    company: "Nexus Logistics",
+    bankId: "contact-jordan-reyes",
+    avatar: "JR",
+    tagline: "Prospect with pending enterprise deal & unfulfilled technical promise",
+    isDemoFocus: true,
+    meetings: [
+      {
+        date: "2025-11-14",
+        summary: "Budget & pricing discussion",
+        content: "Meeting on November 14, 2025 with Jordan Reyes: Discussed budget and enterprise licensing tiers for the upcoming year. Jordan said current budget is locked for Q4 and explicitly said: 'let's revisit pricing next quarter.'",
+        hasOutstandingCommitment: false,
+      },
+      {
+        date: "2025-12-19",
+        summary: "Integration support concern & unfulfilled commitment",
+        content: "Meeting on December 19, 2025 with Jordan Reyes: Jordan raised a major concern about integration support with their legacy warehouse management system. I PROMISED to send a technical follow-up doc on integration support within 48 hours. As of today this has NOT been sent — this is an outstanding, unfulfilled commitment and is now significantly overdue.",
+        hasOutstandingCommitment: true,
+      },
+      {
+        date: "2026-01-16",
+        summary: "Light scheduling & check-in call",
+        content: "Meeting on January 16, 2026 with Jordan Reyes: Light rescheduling call to align on calendar availability for our next working session. No major technical or pricing decisions discussed.",
+        hasOutstandingCommitment: false,
+      },
+    ],
+  },
+  {
+    id: "elena-vance",
+    name: "Elena Vance",
+    role: "VP of Product",
+    company: "Acme Robotics",
+    bankId: "contact-elena-vance",
+    avatar: "EV",
+    tagline: "Evaluating 3 vendors for autonomous fleet fleet management",
+    isDemoFocus: false,
+    meetings: [
+      {
+        date: "2025-10-12",
+        summary: "Initial analytics platform demo",
+        content: "Meeting on October 12, 2025 with Elena Vance: Initial product demo of core analytics capabilities. Discussed their Q4 roadmap. Elena mentioned they are evaluating 3 vendors for their autonomous fleet management.",
+        hasOutstandingCommitment: false,
+      },
+      {
+        date: "2025-11-04",
+        summary: "SSO and RBAC compliance review",
+        content: "Meeting on November 04, 2025 with Elena Vance: Explored single sign-on (SSO) and RBAC requirements. Provided documentation on SAML and Okta support. Elena confirmed requirements were completely satisfied.",
+        hasOutstandingCommitment: false,
+      },
+      {
+        date: "2025-12-15",
+        summary: "End-of-year roadmap sync",
+        content: "Meeting on December 15, 2025 with Elena Vance: End-of-year sync. Elena mentioned their engineering team is locked until next budget cycle. All previous action items were fully resolved.",
+        hasOutstandingCommitment: false,
+      },
+    ],
+  },
+  {
+    id: "marcus-chen",
+    name: "Marcus Chen",
+    role: "Engineering Director",
+    company: "DataPulse AI",
+    bankId: "contact-marcus-chen",
+    avatar: "MC",
+    tagline: "Technical lead finalizing cloud infrastructure evaluation",
+    isDemoFocus: false,
+    meetings: [
+      {
+        date: "2025-09-18",
+        summary: "Latency & throughput architecture review",
+        content: "Meeting on September 18, 2025 with Marcus Chen: Technical architecture review regarding API latency and rate limits. Marcus confirmed standard tier limits are sufficient for their workloads.",
+        hasOutstandingCommitment: false,
+      },
+      {
+        date: "2025-10-22",
+        summary: "Security and compliance questionnaire",
+        content: "Meeting on October 22, 2025 with Marcus Chen: Security questionnaire walkthrough. Compliance team cleared SOC2 Type II report with zero findings.",
+        hasOutstandingCommitment: false,
+      },
+      {
+        date: "2025-11-29",
+        summary: "Sandbox migration completion",
+        content: "Meeting on November 29, 2025 with Marcus Chen: Catch-up on sandbox migration. Marcus reported migration was successful with no blockers or open questions.",
+        hasOutstandingCommitment: false,
+      },
+    ],
+  },
+];
+
+export function getContactById(id: string) {
+  return SEEDED_CONTACTS.find((c) => c.id === id);
+}
