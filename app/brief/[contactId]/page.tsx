@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -178,24 +178,21 @@ export default function BriefDetailPage() {
     Boolean(rawMemoriesContainOverdue);
 
   // Deduplicate raw memories (case-insensitive exact text & core statement match)
-  const dedupedMemories = useMemo(() => {
-    if (!data?.withHindsight?.rawMemories) return [];
-    const seen = new Set<string>();
-    const result: typeof data.withHindsight.rawMemories = [];
+  const rawMemories = data.withHindsight.rawMemories || [];
+  const seenMemories = new Set<string>();
+  const dedupedMemories: typeof rawMemories = [];
 
-    for (const mem of data.withHindsight.rawMemories) {
-      const fullClean = mem.text.trim().toLowerCase();
-      // Extract main sentence before metadata tags like " | When: ..."
-      const coreClean = fullClean.split('|')[0].trim();
+  for (const mem of rawMemories) {
+    const fullClean = mem.text.trim().toLowerCase();
+    // Extract main sentence before metadata tags like " | When: ..."
+    const coreClean = fullClean.split('|')[0].trim();
 
-      if (!seen.has(fullClean) && !seen.has(coreClean)) {
-        seen.add(fullClean);
-        seen.add(coreClean);
-        result.push(mem);
-      }
+    if (!seenMemories.has(fullClean) && !seenMemories.has(coreClean)) {
+      seenMemories.add(fullClean);
+      seenMemories.add(coreClean);
+      dedupedMemories.push(mem);
     }
-    return result;
-  }, [data?.withHindsight?.rawMemories]);
+  }
 
   const DEFAULT_MEMORY_LIMIT = 4;
   const displayedMemories = showAllMemories
