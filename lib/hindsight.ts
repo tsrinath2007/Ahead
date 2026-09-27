@@ -5,7 +5,7 @@ let loggedRecallShape = false;
 let loggedReflectShape = false;
 
 export function isHindsightConfigured(): boolean {
-  return Boolean(process.env.HINDSIGHT_API_KEY && process.env.HINDSIGHT_API_URL);
+  return Boolean(process.env.HINDSIGHT_API_KEY);
 }
 
 export function getHindsightClient(): HindsightClient {

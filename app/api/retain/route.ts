@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     if (!isHindsightConfigured()) {
       return NextResponse.json(
-        { error: 'Memory system unavailable: HINDSIGHT_API_KEY or HINDSIGHT_API_URL is missing in environment variables.' },
+        { error: 'Memory system unavailable: HINDSIGHT_API_KEY is missing in environment variables.' },
         { status: 503 }
       );
     }

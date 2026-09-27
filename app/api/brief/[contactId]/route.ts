@@ -67,7 +67,7 @@ export async function GET(
 
   try {
     if (!diagnostics.hindsightConnected) {
-      throw new Error('Memory system unavailable: HINDSIGHT_API_KEY or HINDSIGHT_API_URL is missing in environment variables.');
+      throw new Error('Memory system unavailable: HINDSIGHT_API_KEY is missing in environment variables.');
     }
 
     // Step A: recall() raw matching memories
