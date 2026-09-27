@@ -3,6 +3,9 @@
 **Target Run Time**: ~100–115 seconds (under 2 minutes)  
 **Objective**: Demonstrate how Hindsight turns pre-meeting preparation from generic discovery into high-stakes relationship intelligence that surfaces forgotten commitments and tracks portfolio health.
 
+> [!IMPORTANT]
+> **Pre-Demo Setup Note**: Before recording, run `npm run reset:jordan` (or `npm run seed`) to guarantee a clean starting state. Do NOT click "Log this meeting" as a test after this point unless immediately re-seeding afterward — doing so will alter the live memory bank and can resolve the demo's overdue-promise story.
+
 ---
 
 ### [0:00 – 0:20] Hook & The Amnesia Problem

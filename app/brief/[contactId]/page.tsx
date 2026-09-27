@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -34,10 +34,12 @@ export default function BriefDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [whyBriefOpen, setWhyBriefOpen] = useState(true);
+  const [showAllMemories, setShowAllMemories] = useState(false);
 
   // Live "Log this meeting" state
   const [outcomeText, setOutcomeText] = useState('');
   const [loggingOutcome, setLoggingOutcome] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [logSuccessMessage, setLogSuccessMessage] = useState<string | null>(null);
   const [logErrorMessage, setLogErrorMessage] = useState<string | null>(null);
 
@@ -68,9 +70,16 @@ export default function BriefDetailPage() {
     }
   }, [contactId]);
 
-  // Live Retain Handler
-  const handleLogMeeting = async (e: React.FormEvent) => {
+  // Live Retain Handler: initiate confirmation
+  const handleInitiateLogMeeting = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!outcomeText.trim()) return;
+    setShowConfirmModal(true);
+  };
+
+  // Confirmed Retain Execution
+  const handleLogMeetingConfirmed = async () => {
+    setShowConfirmModal(false);
     if (!outcomeText.trim()) return;
 
     setLoggingOutcome(true);
@@ -167,6 +176,31 @@ export default function BriefDetailPage() {
   const hasOverdue =
     data.withHindsight.synthesizedBrief.urgentOverdue.length > 0 ||
     Boolean(rawMemoriesContainOverdue);
+
+  // Deduplicate raw memories (case-insensitive exact text & core statement match)
+  const dedupedMemories = useMemo(() => {
+    if (!data?.withHindsight?.rawMemories) return [];
+    const seen = new Set<string>();
+    const result: typeof data.withHindsight.rawMemories = [];
+
+    for (const mem of data.withHindsight.rawMemories) {
+      const fullClean = mem.text.trim().toLowerCase();
+      // Extract main sentence before metadata tags like " | When: ..."
+      const coreClean = fullClean.split('|')[0].trim();
+
+      if (!seen.has(fullClean) && !seen.has(coreClean)) {
+        seen.add(fullClean);
+        seen.add(coreClean);
+        result.push(mem);
+      }
+    }
+    return result;
+  }, [data?.withHindsight?.rawMemories]);
+
+  const DEFAULT_MEMORY_LIMIT = 4;
+  const displayedMemories = showAllMemories
+    ? dedupedMemories
+    : dedupedMemories.slice(0, DEFAULT_MEMORY_LIMIT);
 
   return (
     <div className="space-y-8 pb-16">
@@ -416,18 +450,18 @@ export default function BriefDetailPage() {
                     Live Hindsight Recall
                   </span>
                   <span className="text-[11px] font-mono text-slate-400">
-                    {data.withHindsight.rawMemories.length} matches
+                    {displayedMemories.length} of {dedupedMemories.length} distinct
                   </span>
                 </div>
               </div>
 
-              <div className="p-4 space-y-2.5 max-h-60 overflow-y-auto divide-y divide-slate-800/60">
-                {data.withHindsight.rawMemories.length === 0 ? (
+              <div className="p-4 space-y-2.5 max-h-72 overflow-y-auto divide-y divide-slate-800/60">
+                {dedupedMemories.length === 0 ? (
                   <p className="text-xs text-slate-400 italic">
                     No matching memories returned from Hindsight bank. (Run seed script if unseeded)
                   </p>
                 ) : (
-                  data.withHindsight.rawMemories.map((mem, idx) => (
+                  displayedMemories.map((mem, idx) => (
                     <div
                       key={mem.id || idx}
                       className="pt-2.5 first:pt-0 space-y-1 text-xs font-mono"
@@ -445,6 +479,29 @@ export default function BriefDetailPage() {
                       </p>
                     </div>
                   ))
+                )}
+
+                {/* Show all N raw memories toggle */}
+                {dedupedMemories.length > DEFAULT_MEMORY_LIMIT && (
+                  <div className="pt-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllMemories(!showAllMemories)}
+                      className="w-full py-1.5 px-3 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/70 hover:bg-slate-800 rounded-lg border border-slate-700/80 flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      {showAllMemories ? (
+                        <>
+                          <span>Show top {DEFAULT_MEMORY_LIMIT} relevant memories</span>
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </>
+                      ) : (
+                        <>
+                          <span>Show all {dedupedMemories.length} raw memories ({dedupedMemories.length - DEFAULT_MEMORY_LIMIT} more)</span>
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -575,7 +632,7 @@ export default function BriefDetailPage() {
             </div>
           </div>
 
-          <form onSubmit={handleLogMeeting} className="space-y-4">
+          <form onSubmit={handleInitiateLogMeeting} className="space-y-4">
             <div>
               <textarea
                 value={outcomeText}
@@ -586,29 +643,56 @@ export default function BriefDetailPage() {
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <button
-                type="submit"
-                disabled={loggingOutcome || !outcomeText.trim()}
-                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm transition-all"
-              >
-                {loggingOutcome ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Retaining to Bank...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Retain Meeting Outcome Live</span>
-                  </>
-                )}
-              </button>
+            {showConfirmModal ? (
+              <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-xl space-y-3">
+                <div className="flex items-start gap-2 text-xs font-bold text-amber-900">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <span>
+                    This will permanently update {contact.name}&apos;s live memory bank in Hindsight — continue?
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleLogMeetingConfirmed}
+                    disabled={loggingOutcome}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs rounded-lg shadow-sm transition-all"
+                  >
+                    {loggingOutcome ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Retaining to Bank...</span>
+                      </>
+                    ) : (
+                      <span>Yes, Confirm &amp; Retain</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmModal(false)}
+                    disabled={loggingOutcome}
+                    className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg border border-slate-300 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <button
+                  type="submit"
+                  disabled={loggingOutcome || !outcomeText.trim()}
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm transition-all"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Retain Meeting Outcome Live</span>
+                </button>
 
-              <span className="text-[11px] text-slate-400">
-                Directly invokes <code>POST /api/retain</code> &rarr; <code>client.retain(bankId, content)</code>
-              </span>
-            </div>
+                <span className="text-[11px] text-slate-400">
+                  Directly invokes <code>POST /api/retain</code> &rarr; <code>client.retain(bankId, content)</code>
+                </span>
+              </div>
+            )}
           </form>
 
           {/* Success Banner */}

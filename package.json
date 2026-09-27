@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "reset:jordan": "tsx scripts/reset-jordan.ts"
   },
   "dependencies": {
     "@vectorize-io/hindsight-client": "^0.10.1",
