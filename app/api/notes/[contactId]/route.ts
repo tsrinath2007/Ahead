@@ -10,14 +10,16 @@ export async function GET(
   { params }: { params: { contactId: string } }
 ) {
   try {
-    const contactId = params.contactId;
+    const rawId = params.contactId || '';
+    const contactId = decodeURIComponent(rawId).trim();
     const contact = getContactById(contactId);
 
     if (!contact) {
-      return NextResponse.json(
-        { error: `Contact with ID "${contactId}" not found.` },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        contact: null,
+        notes: [],
+        count: 0,
+      });
     }
 
     const notes = await getNotesForContact(contactId);

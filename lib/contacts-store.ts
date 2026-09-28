@@ -56,6 +56,7 @@ export function getContactById(id: string): (Contact & { meetings: MeetingMemory
 }
 
 export function createNewContact(input: {
+  id?: string;
   name: string;
   role: string;
   company: string;
@@ -69,12 +70,10 @@ export function createNewContact(input: {
 }): Contact & { meetings: MeetingMemoryRecord[] } {
   const all = getAllContacts();
 
-  // Create clean slug ID with guaranteed fallback
-  let baseId = (input.name || '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+  // If a specific ID was provided, sanitize it; otherwise derive from name/company
+  let baseId = input.id
+    ? input.id.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    : (input.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
   if (!baseId) {
     const compSlug = (input.company || '')
@@ -136,7 +135,17 @@ export function updateContact(
   updates: Partial<Pick<Contact, 'name' | 'role' | 'company' | 'email' | 'phone' | 'linkedin' | 'tagline'>>
 ): (Contact & { meetings: MeetingMemoryRecord[] }) | null {
   const all = getAllContacts();
-  const index = all.findIndex((c) => c.id === id);
+  const rawId = (id || '').trim();
+  const decoded = decodeURIComponent(rawId).trim().toLowerCase();
+  const slugified = decoded.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+  const index = all.findIndex(
+    (c) =>
+      c.id === rawId ||
+      c.id.toLowerCase() === decoded ||
+      (slugified && c.id.toLowerCase() === slugified) ||
+      c.name.toLowerCase() === decoded
+  );
   if (index === -1) return null;
 
   const current = all[index];
@@ -168,7 +177,17 @@ export function updateContact(
 
 export function deleteContact(id: string): boolean {
   const all = getAllContacts();
-  const index = all.findIndex((c) => c.id === id);
+  const rawId = (id || '').trim();
+  const decoded = decodeURIComponent(rawId).trim().toLowerCase();
+  const slugified = decoded.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+  const index = all.findIndex(
+    (c) =>
+      c.id === rawId ||
+      c.id.toLowerCase() === decoded ||
+      (slugified && c.id.toLowerCase() === slugified) ||
+      c.name.toLowerCase() === decoded
+  );
   if (index === -1) return false;
 
   all.splice(index, 1);

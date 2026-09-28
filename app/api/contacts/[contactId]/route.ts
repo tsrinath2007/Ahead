@@ -43,7 +43,7 @@ export async function PUT(
       );
     }
 
-    const updated = updateContact(contactId, {
+    const updated = updateContact(existing.id, {
       name,
       role,
       company,
@@ -71,7 +71,8 @@ export async function DELETE(
   { params }: { params: { contactId: string } }
 ) {
   try {
-    const contactId = params.contactId;
+    const rawContactId = params.contactId || '';
+    const contactId = decodeURIComponent(rawContactId).trim();
     const existing = getContactById(contactId);
     if (!existing) {
       return NextResponse.json(
@@ -81,15 +82,15 @@ export async function DELETE(
     }
 
     // Protect demo benchmark contacts if needed, or allow deleting with warning
-    if (existing.isDemoFocus && contactId === 'jordan-reyes') {
+    if (existing.isDemoFocus && existing.id === 'jordan-reyes') {
       return NextResponse.json(
         { error: 'Cannot delete benchmark demo contact Jordan Reyes.' },
         { status: 400 }
       );
     }
 
-    deleteContact(contactId);
-    await deleteNotesForContact(contactId);
+    deleteContact(existing.id);
+    await deleteNotesForContact(existing.id);
 
     return NextResponse.json({
       success: true,

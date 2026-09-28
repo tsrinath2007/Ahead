@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts-store';
-import { recallMemories, reflectOnBank, isHindsightConfigured } from '@/lib/hindsight';
+import { getContactById, createNewContact } from '@/lib/contacts-store';
+import { recallMemories, reflectOnBank, isHindsightConfigured, createBankIfNotExists } from '@/lib/hindsight';
 import { generateGenericBrief, generateHindsightBrief, isGroqConfigured } from '@/lib/groq';
 import { BriefResponse, RecalledItem } from '@/lib/types';
 
@@ -13,13 +13,37 @@ export async function GET(
 ) {
   const rawId = params.contactId || '';
   const contactId = decodeURIComponent(rawId).trim();
-  const contact = getContactById(contactId);
+  let contact = getContactById(contactId);
 
+  // If not found, auto-provision on-demand so any name automatically creates a workspace and memory bank
   if (!contact) {
-    return NextResponse.json(
-      { error: `Contact with ID "${contactId || rawId}" not found.` },
-      { status: 404 }
-    );
+    const cleanId = contactId
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const formattedName = (cleanId || 'Executive Contact')
+      .split('-')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+
+    contact = createNewContact({
+      id: cleanId,
+      name: formattedName,
+      role: 'Executive Partner',
+      company: 'Enterprise Organization',
+      tagline: `Stakeholder dossier for ${formattedName}`,
+    });
+
+    if (isHindsightConfigured()) {
+      createBankIfNotExists(
+        contact.bankId,
+        `${contact.name} - ${contact.company}`,
+        `Executive relationship and commitment tracking for ${contact.name}.`
+      ).catch((err) => console.warn('[Auto-provision Hindsight]', err?.message || err));
+    }
   }
 
   const groqKeyOverride = request.headers.get('x-groq-api-key') || undefined;
