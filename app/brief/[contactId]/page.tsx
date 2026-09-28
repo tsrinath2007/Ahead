@@ -161,16 +161,21 @@ export default function BriefDetailPage() {
   const handleDeleteCurrentContact = async () => {
     setDeletingContact(true);
     try {
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('ahead_deleted_contacts_v1');
+          const current = raw ? JSON.parse(raw) : [];
+          const cleanId = contactId.trim().toLowerCase();
+          const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          const updated = Array.from(new Set([...current, cleanId, slugified].filter(Boolean)));
+          localStorage.setItem('ahead_deleted_contacts_v1', JSON.stringify(updated));
+        } catch {}
+      }
       const res = await fetch(`/api/contacts/${encodeURIComponent(contactId)}`, {
         method: 'DELETE',
       });
-      if (res.ok) {
-        window.location.replace('/');
-        return;
-      } else {
-        const json = await res.json();
-        alert(json.error || 'Failed to delete contact');
-      }
+      window.location.replace('/');
+      return;
     } catch (err) {
       console.error('Error deleting contact:', err);
       window.location.replace('/');

@@ -125,6 +125,17 @@ export function EditContactModal({
         throw new Error(json.error || 'Failed to delete contact');
       }
 
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('ahead_deleted_contacts_v1');
+          const current = raw ? JSON.parse(raw) : [];
+          const cleanId = contact.id.trim().toLowerCase();
+          const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          const updated = Array.from(new Set([...current, cleanId, slugified].filter(Boolean)));
+          localStorage.setItem('ahead_deleted_contacts_v1', JSON.stringify(updated));
+        } catch {}
+      }
+
       if (onDelete) {
         onDelete(contact.id);
       }

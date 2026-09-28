@@ -36,6 +36,40 @@ function LinkedinIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   );
 }
 
+const LOCAL_DELETED_KEY = 'ahead_deleted_contacts_v1';
+
+function getLocalDeletedIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LOCAL_DELETED_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function addLocalDeletedId(id: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = getLocalDeletedIds();
+    const cleanId = (id || '').trim().toLowerCase();
+    const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const updated = Array.from(new Set([...current, cleanId, slugified].filter(Boolean)));
+    localStorage.setItem(LOCAL_DELETED_KEY, JSON.stringify(updated));
+  } catch {}
+}
+
+function removeLocalDeletedId(id: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = getLocalDeletedIds();
+    const cleanId = (id || '').trim().toLowerCase();
+    const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const updated = current.filter((x) => x !== cleanId && x !== slugified);
+    localStorage.setItem(LOCAL_DELETED_KEY, JSON.stringify(updated));
+  } catch {}
+}
+
 export default function ContactsPage() {
   const router = useRouter();
   const [contacts, setContacts] = useState<(Contact & { meetings: MeetingMemoryRecord[] })[]>([]);
@@ -62,11 +96,17 @@ export default function ContactsPage() {
 
   const fetchContacts = async () => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/contacts?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         if (Array.isArray(json.contacts)) {
-          setContacts(json.contacts);
+          const deleted = getLocalDeletedIds();
+          const filtered = json.contacts.filter((c: Contact) => {
+            const cid = c.id.toLowerCase();
+            return !deleted.includes(cid);
+          });
+          setContacts(filtered);
         }
       }
     } catch (err) {
@@ -115,6 +155,7 @@ export default function ContactsPage() {
 
       // Immediately add newly created contact to state so it appears instantly on screen!
       if (json.contact) {
+        removeLocalDeletedId(json.contact.id);
         setContacts((prev) => [json.contact, ...prev.filter((c) => c.id !== json.contact.id)]);
         setSuccessToast({ id: json.contact.id, name: json.contact.name });
       }
@@ -143,12 +184,15 @@ export default function ContactsPage() {
   };
 
   const handleDeleteContact = async (id: string) => {
-    // Optimistic UI update: instantly disappears from the UI!
+    // 1. Immediately persist to localStorage so it can NEVER reappear even if Vercel cold-starts
+    addLocalDeletedId(id);
+
+    // 2. Optimistic UI update: instantly disappears from the UI!
     setContacts((prev) => prev.filter((c) => c.id !== id));
     setContactToDelete(null);
 
     try {
-      const res = await fetch(`/api/contacts/${encodeURIComponent(id)}`, {
+      await fetch(`/api/contacts/${encodeURIComponent(id)}`, {
         method: 'DELETE',
       });
       await fetchContacts();
@@ -725,6 +769,7 @@ export default function ContactsPage() {
             );
           }}
           onDelete={(deletedId) => {
+            addLocalDeletedId(deletedId);
             setContacts((prev) => prev.filter((c) => c.id !== deletedId));
           }}
         />
