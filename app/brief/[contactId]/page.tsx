@@ -23,6 +23,10 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Mail,
+  Copy,
+  Check,
+  Briefcase,
 } from 'lucide-react';
 import { BriefResponse } from '@/lib/types';
 import { MarkdownContent } from '@/components/MarkdownContent';
@@ -44,6 +48,22 @@ export default function BriefDetailPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [logSuccessMessage, setLogSuccessMessage] = useState<string | null>(null);
   const [logErrorMessage, setLogErrorMessage] = useState<string | null>(null);
+
+  // Feature: Draft follow-up email
+  const [draftingEmail, setDraftingEmail] = useState(false);
+  const [followupDraft, setFollowupDraft] = useState<string | null>(null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [copiedDraft, setCopiedDraft] = useState(false);
+
+  // Feature: Handoff brief
+  const [generatingHandoff, setGeneratingHandoff] = useState(false);
+  const [handoffData, setHandoffData] = useState<{
+    relationshipSummary: string;
+    openCommitments: Array<{ commitment: string; isOverdue: boolean }>;
+    whatTheyCareAbout: string[];
+    firstWeekActions: string[];
+  } | null>(null);
+  const [handoffError, setHandoffError] = useState<string | null>(null);
 
   const fetchBrief = async () => {
     setLoading(true);
@@ -117,6 +137,58 @@ export default function BriefDetailPage() {
       setLogErrorMessage(err?.message || 'Failed to log meeting outcome');
     } finally {
       setLoggingOutcome(false);
+    }
+  };
+
+  // Feature: Draft Follow-up Email Handler
+  const handleDraftFollowup = async () => {
+    setDraftingEmail(true);
+    setDraftError(null);
+    try {
+      const res = await fetch(`/api/followup/${contactId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const resJson = await res.json();
+      if (!res.ok) {
+        throw new Error(resJson.error || 'Failed to draft follow-up email');
+      }
+      setFollowupDraft(resJson.draft);
+    } catch (err: any) {
+      console.error('Error generating follow-up draft:', err);
+      setDraftError(err?.message || 'Failed to draft email');
+    } finally {
+      setDraftingEmail(false);
+    }
+  };
+
+  // Feature: Copy Draft to Clipboard Handler
+  const handleCopyDraft = () => {
+    if (!followupDraft) return;
+    navigator.clipboard.writeText(followupDraft);
+    setCopiedDraft(true);
+    setTimeout(() => setCopiedDraft(false), 2000);
+  };
+
+  // Feature: Account Handoff Brief Handler
+  const handleGenerateHandoff = async () => {
+    setGeneratingHandoff(true);
+    setHandoffError(null);
+    try {
+      const res = await fetch(`/api/handoff/${contactId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const resJson = await res.json();
+      if (!res.ok) {
+        throw new Error(resJson.error || 'Failed to generate account handoff brief');
+      }
+      setHandoffData(resJson.handoff);
+    } catch (err: any) {
+      console.error('Error generating handoff brief:', err);
+      setHandoffError(err?.message || 'Failed to generate handoff brief');
+    } finally {
+      setGeneratingHandoff(false);
     }
   };
 
@@ -286,6 +358,141 @@ export default function BriefDetailPage() {
         </div>
       </div>
 
+      {/* ACCOUNT HANDOFF BRIEF (FEATURE: SECTION 5) */}
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 flex-shrink-0">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-bold text-white">
+                  Account Transition: Taking Over This Account?
+                </h2>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-indigo-200 border border-white/15">
+                  Hindsight reflect() Synthesis
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Generate an executive handoff brief based on the complete multi-meeting episodic memory bank.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleGenerateHandoff}
+            disabled={generatingHandoff}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 text-white font-bold text-xs rounded-xl shadow-md transition-all self-start sm:self-auto whitespace-nowrap"
+          >
+            {generatingHandoff ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Synthesizing Handoff...</span>
+              </>
+            ) : (
+              <>
+                <FileText className="w-3.5 h-3.5" />
+                <span>{handoffData ? 'Regenerate Handoff Brief' : 'Generate Handoff Brief'}</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Handoff Error Banner */}
+        {handoffError && (
+          <div className="p-4 bg-rose-50 border-b border-rose-200 text-rose-900 text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+            <span>{handoffError}</span>
+          </div>
+        )}
+
+        {/* Handoff Generated Content */}
+        {handoffData && (
+          <div className="p-6 space-y-6 bg-slate-50/70 border-t border-slate-200 animate-in fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* 1. Relationship Summary */}
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <Brain className="w-4 h-4 text-indigo-600" />
+                  <span>1. Relationship Summary</span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                  {handoffData.relationshipSummary}
+                </p>
+              </div>
+
+              {/* 2. Open Commitments (Overdue Flagged) */}
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <AlertTriangle className="w-4 h-4 text-rose-600" />
+                  <span>2. Open Commitments & Deliverables</span>
+                </div>
+                <div className="space-y-2">
+                  {handoffData.openCommitments.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic">No open commitments recorded.</p>
+                  ) : (
+                    handoffData.openCommitments.map((c, i) => (
+                      <div
+                        key={i}
+                        className={`p-3 rounded-lg border text-xs sm:text-sm font-medium flex items-start gap-2.5 ${
+                          c.isOverdue ? 'bg-rose-50 border-rose-200 text-rose-950' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      >
+                        {c.isOverdue ? (
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-rose-600 text-white flex-shrink-0 mt-0.5">
+                            OVERDUE
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 text-slate-700 flex-shrink-0 mt-0.5">
+                            PENDING
+                          </span>
+                        )}
+                        <span className="leading-snug">{c.commitment}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* 3. What They Care About */}
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4 text-amber-600" />
+                  <span>3. What They Care About (Priorities & Constraints)</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {handoffData.whatTheyCareAbout.map((item, i) => (
+                    <li key={i} className="text-xs sm:text-sm text-slate-700 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100 flex items-start gap-2">
+                      <span className="text-indigo-600 font-bold">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 4. First-Week Actions */}
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>4. First-Week Action Items (New Owner Plan)</span>
+                </div>
+                <div className="space-y-2">
+                  {handoffData.firstWeekActions.map((action, i) => (
+                    <div key={i} className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg text-xs sm:text-sm text-emerald-950 font-medium flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span className="leading-snug">{action}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Diagnostics / Error Notice if any */}
       {data.withHindsight.error && (
         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl flex items-start gap-3 shadow-sm">
@@ -369,16 +576,39 @@ export default function BriefDetailPage() {
           <div className="p-6 space-y-6 flex-1">
             {/* 1. OUTSTANDING COMMITMENTS CALLOUT (THE "AHA!" MOMENT - VISUALLY POPS) */}
             {hasOverdue ? (
-              <div className="bg-gradient-to-br from-rose-50 to-amber-50 border-2 border-rose-500 rounded-2xl p-5 shadow-md space-y-3 relative overflow-hidden ring-2 ring-rose-500/20">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-rose-600 to-amber-600 text-white text-xs font-black tracking-wider uppercase shadow-sm">
-                    <AlertTriangle className="w-3.5 h-3.5 animate-bounce" />
-                    <span>⚠ Overdue Commitment</span>
+              <div className="bg-gradient-to-br from-rose-50 to-amber-50 border-2 border-rose-500 rounded-2xl p-5 shadow-md space-y-3.5 relative overflow-hidden ring-2 ring-rose-500/20">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-rose-600 to-amber-600 text-white text-xs font-black tracking-wider uppercase shadow-sm">
+                      <AlertTriangle className="w-3.5 h-3.5 animate-bounce" />
+                      <span>⚠ Overdue Commitment</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded border border-rose-200">
+                      High Urgency
+                    </span>
                   </div>
-                  <span className="text-[11px] font-bold text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded border border-rose-200">
-                    High Urgency
-                  </span>
+
+                  {/* Feature: Draft follow-up email button */}
+                  <button
+                    type="button"
+                    onClick={handleDraftFollowup}
+                    disabled={draftingEmail}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white text-xs font-bold shadow-sm transition-all"
+                  >
+                    {draftingEmail ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Drafting Email...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>Draft follow-up email</span>
+                      </>
+                    )}
+                  </button>
                 </div>
+
                 {(data.withHindsight.synthesizedBrief.urgentOverdue.length > 0
                   ? data.withHindsight.synthesizedBrief.urgentOverdue
                   : ['CRITICAL: Promised technical follow-up doc on integration support was never sent — outstanding commitment (40+ days overdue)!']
@@ -390,9 +620,53 @@ export default function BriefDetailPage() {
                     {item}
                   </div>
                 ))}
+
                 <p className="text-[11px] text-rose-900 font-semibold bg-rose-100/50 p-2.5 rounded-lg border border-rose-200/60">
                   ⚡ <strong>Strategic Rule:</strong> Do not pitch pricing first. Address and deliver this unfulfilled promise in the first 60 seconds to restore trust.
                 </p>
+
+                {/* Follow-up Draft Error */}
+                {draftError && (
+                  <div className="bg-white border border-rose-300 text-rose-900 text-xs p-3 rounded-xl flex items-center gap-2 shadow-sm">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    <span>{draftError}</span>
+                  </div>
+                )}
+
+                {/* Follow-up Draft Card */}
+                {followupDraft && (
+                  <div className="bg-white border-2 border-rose-300 rounded-xl p-4 shadow-sm space-y-2.5 animate-in fade-in">
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                        <Mail className="w-4 h-4 text-rose-600" />
+                        <span>Accountable Follow-up Email Draft</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCopyDraft}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md transition-colors"
+                      >
+                        {copiedDraft ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy Draft</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="bg-slate-50 p-3.5 rounded-lg text-xs text-slate-800 leading-relaxed font-mono whitespace-pre-wrap border border-slate-200">
+                      {followupDraft}
+                    </div>
+                    <p className="text-[10px] text-slate-500 italic">
+                      Grounded in raw memory facts. Acknowledges delay, proposes delivery, zero defensive excuses.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-xs text-emerald-900 flex items-center gap-2">

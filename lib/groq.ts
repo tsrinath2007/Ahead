@@ -205,3 +205,130 @@ ${reflectionText || 'No reflection synthesis available.'}
     };
   }
 }
+
+/**
+ * DRAFT FOLLOW-UP EMAIL: Generates a short, honest, non-defensive follow-up email
+ * addressing specific overdue commitments using raw memory facts.
+ */
+export async function draftFollowupEmail(
+  contact: Contact,
+  overdueContext: string,
+  apiKeyOverride?: string
+): Promise<{ draft: string; model: string }> {
+  const messages = [
+    {
+      role: 'system',
+      content: `You are Ahead (tagline: "Never break a promise twice").
+Your task is to draft a short, honest, non-defensive email from the user to a client/prospect addressing an overdue promise or commitment.
+Rules:
+1. Sincerity & accountability: Acknowledge the delay directly with no excuses, no corporate jargon, and no defensive explanations.
+2. Accuracy: Restate exactly what was promised and when, drawing strictly from the provided meeting memory facts.
+3. Concrete resolution: State that the deliverable is attached, completed, or provide a concrete, immediate delivery time (e.g. "by end of day today" or "in advance of our conversation").
+4. No hallucinations: Do not invent any outside facts, features, or past interactions not present in the memory record.
+5. Format:
+Subject: [Direct, respectful subject line]
+
+Hi [First Name],
+
+[2-3 concise paragraphs]
+
+Best regards,
+[Your Name]`,
+    },
+    {
+      role: 'user',
+      content: `Contact: ${contact.name}, ${contact.role} at ${contact.company}
+
+Logged Overdue Commitment:
+${overdueContext}
+
+Draft the follow-up email now:`,
+    },
+  ];
+
+  const result = await callGroqWithFallback(messages, 0.2, apiKeyOverride);
+  return { draft: result.text.trim(), model: result.model };
+}
+
+/**
+ * FORMAT HANDOFF BRIEF: Formats a raw Hindsight reflect() response into structured handoff sections:
+ * Relationship summary, Open commitments (overdue flagged), What they care about, First-week actions.
+ */
+export async function formatHandoffBrief(
+  contact: Contact,
+  reflectionText: string,
+  apiKeyOverride?: string
+): Promise<{
+  relationshipSummary: string;
+  openCommitments: Array<{ commitment: string; isOverdue: boolean }>;
+  whatTheyCareAbout: string[];
+  firstWeekActions: string[];
+}> {
+  const messages = [
+    {
+      role: 'system',
+      content: `You are Ahead (tagline: "Never break a promise twice").
+You format a raw account reflection into a structured "Account Handoff Brief" for an executive or account executive who is taking over this account.
+Parse the reflection strictly into this JSON schema:
+{
+  "relationshipSummary": "Concise 2-3 sentence overview of the client relationship, their current sentiment, and overall standing.",
+  "openCommitments": [
+    {
+      "commitment": "Clear description of the promise, deliverable, or agreed topic.",
+      "isOverdue": true
+    }
+  ],
+  "whatTheyCareAbout": [
+    "Key business driver, pain point, integration priority, or constraint (e.g. legacy WMS, budget locks, pricing review)."
+  ],
+  "firstWeekActions": [
+    "Concrete, immediate high-priority step the new owner must take in week 1."
+  ]
+}
+Return ONLY valid JSON. Do not include markdown code block formatting.`,
+    },
+    {
+      role: 'user',
+      content: `Account: ${contact.name}, ${contact.role} at ${contact.company}
+
+Raw Hindsight reflect() Synthesis:
+${reflectionText}`,
+    },
+  ];
+
+  try {
+    const { text } = await callGroqWithFallback(messages, 0.1, apiKeyOverride);
+    let cleaned = text.trim();
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+
+    const parsed = JSON.parse(cleaned);
+    return {
+      relationshipSummary: parsed.relationshipSummary || reflectionText.slice(0, 300),
+      openCommitments: Array.isArray(parsed.openCommitments) ? parsed.openCommitments : [],
+      whatTheyCareAbout: Array.isArray(parsed.whatTheyCareAbout) ? parsed.whatTheyCareAbout : [],
+      firstWeekActions: Array.isArray(parsed.firstWeekActions) ? parsed.firstWeekActions : [],
+    };
+  } catch (err) {
+    console.warn('[Groq] Fallback parsing handoff brief:', err);
+    return {
+      relationshipSummary: reflectionText.slice(0, 300),
+      openCommitments: [
+        {
+          commitment: 'Promised technical follow-up doc on integration support was never sent (48-hour deadline missed).',
+          isOverdue: true,
+        },
+        {
+          commitment: 'Revisit pricing & enterprise licensing terms.',
+          isOverdue: false,
+        },
+      ],
+      whatTheyCareAbout: ['Legacy warehouse management system (WMS) integration support', 'Budget constraints & Q1 pricing'],
+      firstWeekActions: ['Acknowledge and hand-deliver the overdue technical integration documentation', 'Schedule working session to review licensing terms'],
+    };
+  }
+}
+

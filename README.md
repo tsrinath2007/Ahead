@@ -1,7 +1,9 @@
-# Ahead — Know what matters before you meet.
+# Ahead — Never break a promise twice.
 
-> **The AI Pre-Meeting Intelligence Agent That Never Forgets What You Promised**  
-> Built for hackathons & executive prep • Powered by **Hindsight** (`@vectorize-io/hindsight-client`) and **Groq LLM**.
+> **Know what matters before you meet.**  
+> Built for executive prep & high-stakes meetings • Powered by **Hindsight** (`@vectorize-io/hindsight-client`) and **Groq LLM**.
+
+Relationships rarely die from big betrayals—they stall on small forgotten promises. When you tell a prospect "I'll send that technical doc by Friday" or agree to "revisit pricing next quarter," generic AI assistants forget immediately. Ahead tracks every commitment across persistent Hindsight memory banks until it is kept, ensuring you never walk into a meeting blindsided by an unfulfilled promise.
 
 ---
 
@@ -19,12 +21,14 @@ When preparing for a meeting with a client or prospect, traditional AI assistant
 
 **Ahead** is a single-click pre-meeting briefing tool that eliminates conversation amnesia:
 1. **Side-by-Side Reality Check**: Contrasts a standard memory-less assistant (muted card) against the Hindsight-powered executive brief (highlighted accent card).
-2. **Urgent Commitment Detection**: Explicitly highlights overdue and unfulfilled promises in an amber/red `⚠ Overdue Commitment` callout before you say a single word.
-3. **Strategic Opening Advice**: Gives you direct guidance on what to lead with in the first 60 seconds to restore trust.
-4. **Memory Transparency Inspector**: Displays the exact raw memories recalled from Hindsight with timestamps and IDs to prove it's real.
-5. **"Why This Brief?" Reasoning Chain**: An expandable panel detailing the 4-step audit trail (*Previous meeting &rarr; What was promised &rarr; Whether it was fulfilled &rarr; Why this matters now*).
-6. **Live Outcome Logging**: Record today's meeting outcome with one click, calling Hindsight's `retain()` live so the agent learns in real time with a visible `✓ Saved to memory` confirmation.
-7. **Portfolio Commitments Dashboard**: Cross-bank dashboard (`/commitments`) auditing all contacts to prove organizational memory across your entire relationship portfolio.
+2. **Urgent Commitment Detection**: Explicitly highlights overdue and unfulfilled promises in an amber/red `⚠ Overdue Commitment` callout derived directly from raw recall results before you say a single word.
+3. **Draft Follow-Up Email (Agentic Follow-Through)**: Click "Draft follow-up email" next to any overdue callout to generate an honest, accountable email draft that restates what was promised and gives a concrete delivery time with zero excuses.
+4. **Account Handoff Brief (Transition Intelligence)**: Click "Generate Handoff Brief" when taking over an account to synthesize relationship history, open commitments, client priorities, and a prioritized week-1 action plan via Hindsight `reflect()`.
+5. **Strategic Opening Advice**: Gives you direct guidance on what to lead with in the first 60 seconds to restore trust.
+6. **Memory Transparency Inspector**: Displays the exact raw memories recalled from Hindsight with timestamps and IDs to prove it's real.
+7. **"Why This Brief?" Reasoning Chain**: An expandable panel detailing the 4-step audit trail (*Previous meeting &rarr; What was promised &rarr; Whether it was fulfilled &rarr; Why this matters now*).
+8. **Live Outcome Logging**: Record today's meeting outcome with one click, calling Hindsight's `retain()` live so the agent learns in real time with a visible `✓ Saved to memory` confirmation.
+9. **Portfolio Commitments Dashboard**: Cross-bank dashboard (`/commitments`) auditing all contacts to prove organizational memory across your entire relationship portfolio.
 
 ---
 
@@ -39,7 +43,9 @@ When preparing for a meeting with a client or prospect, traditional AI assistant
                      Client Pages (UI)              API Route Handlers
                      ├── / (Contact Picker)         ├── /api/brief/[contactId]
                      ├── /brief/[contactId]         ├── /api/commitments
-                     └── /commitments               └── /api/retain
+                     └── /commitments               ├── /api/retain
+                                                    ├── /api/followup/[contactId]
+                                                    └── /api/handoff/[contactId]
                                                              │
                                 ┌────────────────────────────┴───────────────────────────┐
                                 │                                                        │
@@ -58,9 +64,13 @@ When preparing for a meeting with a client or prospect, traditional AI assistant
 
 ---
 
-## 🧠 How Hindsight Memory is Used
+## 🧠 How Hindsight is Used
 
-**Ahead** directly integrates Hindsight's three core primitives into the executive briefing loop:
+| Primitive | API Method | Purpose in Ahead |
+| :--- | :--- | :--- |
+| **`retain`** | `client.retain(bankId, content, options)` | Logs past meetings, commitments, and live outcomes to isolated, per-contact memory banks using deterministic document IDs and `updateMode: "replace"`. |
+| **`recall`** | `client.recall(bankId, query, options)` | Retrieves raw episodic facts for the evidence panel and powers deterministic overdue commitment detection directly from memory before calling Groq. |
+| **`reflect`** | `client.reflect(bankId, query, options)` | Performs high-level multi-meeting synthesis for the executive brief's strategic intent and generates account handoff briefs for ownership transitions. |
 
 ### 1. `client.retain(bankId, content, options)`
 - **Isolated Memory Banks**: Each contact receives an independent memory bank (e.g. `contact-jordan-reyes`, `contact-elena-vance`, `contact-marcus-chen`).
@@ -80,19 +90,19 @@ When preparing for a meeting with a client or prospect, traditional AI assistant
 - **Live Learning**: Right in the meeting view, entering a one-line outcome into the "Log Today's Meeting" form triggers `client.retain()` to persist the update live into the contact's bank.
 
 ### 2. `client.recall(bankId, query, options)`
-- **Targeted Evidence Retrieval**: When the user clicks "Brief me", the route handler executes `client.recall(bankId, query)` to pull matching past facts, agreements, and commitments.
+- **Targeted Evidence Retrieval & Overdue Detection**: When the user clicks "Brief me", the route handler executes `client.recall(bankId, query)` to pull matching past facts, agreements, and commitments. Overdue status is computed directly from raw recall markers before Groq is called.
 - **Cross-Bank Audits**: On the `/commitments` dashboard, `recall()` queries each contact's memory bank to aggregate outstanding obligations across the entire organizational portfolio.
 - **Transparency Panel**: Raw memory units returned by `recall()` are rendered in the dark-slate **🧠 Memory Found** inspector panel, providing unedited evidence behind the brief.
 
 ### 3. `client.reflect(bankId, query, options)`
-- **Synthesized Strategic Guidance**: Rather than running multiple micro-lookups, a single high-level `reflect()` call asks the bank:
+- **Synthesized Strategic Guidance**: Rather than running multiple micro-lookups, high-level `reflect()` calls synthesize cross-meeting trends:
   ```ts
   const reflection = await client.reflect(
     bankId,
     "What should I lead with in the next meeting with this contact, and are there any outstanding promises or commitments I must address?"
   );
   ```
-- **Actionable Brief Generation**: The Groq LLM combines the raw recalled memories and the Hindsight `reflect()` synthesis into a structured brief.
+- **Actionable Brief & Handoff Generation**: Powers the executive strategic intent and the complete account takeover handoff brief.
 
 ---
 

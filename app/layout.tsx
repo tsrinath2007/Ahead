@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { Brain, Sparkles, Clock, CheckCircle2 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Ahead | Know what matters before you meet.',
+  title: 'Ahead | Never break a promise twice.',
   description:
-    'Ahead is an AI pre-meeting agent powered by Hindsight that surfaces overdue promises and forgotten commitments before you meet.',
+    'Ahead — Never break a promise twice. Know what matters before you meet. An AI pre-meeting agent powered by Hindsight that surfaces overdue promises and forgotten commitments before you meet.',
 };
 
 export default function RootLayout({

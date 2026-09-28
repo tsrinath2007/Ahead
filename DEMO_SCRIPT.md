@@ -1,68 +1,57 @@
-# Ahead (Know what matters before you meet) — Hackathon Demo Script
+# Ahead — Never break a promise twice.
 
-**Target Run Time**: ~100–115 seconds (under 2 minutes)  
-**Objective**: Demonstrate how Hindsight turns pre-meeting preparation from generic discovery into high-stakes relationship intelligence that surfaces forgotten commitments and tracks portfolio health.
+> **Subtitle:** Know what matters before you meet.  
+> **Target Run Time:** ~90–110 seconds  
+> **Core Thesis:** Relationships rarely die from big betrayals—they stall on small forgotten promises. Ahead tracks every commitment until it is kept.
 
 > [!IMPORTANT]
-> **Pre-Demo Setup Note**: Before recording, run `npm run reset:jordan` (or `npm run seed`) to guarantee a clean starting state. Do NOT click "Log this meeting" as a test after this point unless immediately re-seeding afterward — doing so will alter the live memory bank and can resolve the demo's overdue-promise story.
+> **Pre-Demo Setup Note**: Before recording, run `npm run seed` or the reset script (`npm run reset:jordan`). Do not click 'Log this meeting' as a test afterwards without re-seeding, because it changes the demo story.
 
 ---
 
-### [0:00 – 0:20] Hook & The Amnesia Problem
+### [0:00 – 0:15] Hook & The Thesis
 - **Screen**: Home Page (`/`) — Contacts List.
 - **Presenter**:
-  > *"Every sales rep or executive has experienced this nightmare: You walk into a meeting with a client, exchange pleasantries, and completely forget that six weeks ago you promised them a critical document and never sent it.*
+  > *"Never break a promise twice.*
   >
-  > *Generic AI assistants don't help—they have zero memory between meetings. Ahead uses Hindsight to give AI persistent episodic memory across past interactions."*
+  > *Relationships rarely die from big betrayals—they stall on small forgotten promises. You promise a prospect a technical doc by Friday, and generic AI assistants forget immediately. Ahead uses Hindsight to track every commitment across persistent memory banks until it is kept."*
 
 ---
 
-### [0:20 – 0:35] Selecting the Demo Contact
-- **Screen**: Point to **Jordan Reyes** card marked with the **"⭐ Try this one (Hero Demo)"** badge and the **"Needs Attention"** health badge.
-- **Action**: Click **"Brief me"**.
-- **Presenter**:
-  > *"Here is our prospect, Jordan Reyes at Nexus Logistics. Notice his card is already flagged as 'Needs Attention'. We've logged 3 past meetings with him over the last few months. Today is meeting #4. Let's hit 'Brief me'."*
-
----
-
-### [0:35 – 1:00] The Core Side-by-Side Comparison (The Payoff)
+### [0:15 – 0:40] The Pre-Meeting Brief: Without vs With Memory
+- **Action**: Point to **Jordan Reyes** (flagged as **"Needs Attention"** with 1 overdue commitment) and click **"Brief me"**.
 - **Screen**: Transitions to `/brief/jordan-reyes`.
-- **Action**: Point to the **LEFT column (muted gray: "Without Memory")**, then gesture to the **RIGHT column (accent highlighted: "With Hindsight Memory")**.
 - **Presenter**:
   > *"Look at the contrast on this screen.*
   >
   > *On the **LEFT**, standard AI has complete amnesia. It gives us cookie-cutter discovery questions: 'Ask Jordan about his operational priorities.' Completely useless.*
   >
-  > *Now look at the **RIGHT** with Hindsight. In bright amber and red: **⚠ Overdue Commitment**. In meeting #2 six weeks ago, we promised Jordan a technical follow-up doc on integration support within 48 hours and never delivered it. Hindsight caught this unfulfilled promise!*
-  >
-  > *It also alerts us that pricing was tabled until this exact quarter, and gives us strategic advice: address the overdue doc in the first 60 seconds to restore trust before talking price."*
+  > *On the **RIGHT**, Ahead uses Hindsight recall() and reflect(). In bright red: **⚠ Overdue Commitment**. Six weeks ago in Meeting #2, we promised Jordan a technical integration doc within 48 hours and never sent it! It also flags that pricing was tabled specifically for this quarter, and instructs us to address the unfulfilled promise in the first 60 seconds."*
 
 ---
 
-### [1:00 – 1:20] Evidence & The "Why This Brief?" Reasoning Chain
-- **Action**: Scroll down to the dark **🧠 Memory Found** inspector and expand **"Why This Brief? (Audit Reasoning Chain)"**.
+### [0:40 – 0:60] Agentic Follow-Through: "Draft Follow-Up Email"
+- **Action**: Inside the Overdue Callout, click **"Draft follow-up email"**.
+- **Screen**: The draft appears immediately with a Copy button.
 - **Presenter**:
-  > *"This isn't hardcoded or hallucinated. In the dark inspector panel below, Hindsight executed `recall()` across our bank `contact-jordan-reyes` to pull the exact raw memory units with dates and entities.*
-  >
-  > *And in this audit panel, you can see the complete 4-step reasoning chain: Previous meeting &rarr; What was promised &rarr; Fulfillment status &rarr; Why this matters today."*
+  > *"Ahead doesn't just alert you—it provides agentic follow-through. With one click on 'Draft follow-up email', Ahead generates an honest, accountable email draft. It acknowledges the delay without defensive excuses, restates exactly what was promised and when, and provides an immediate delivery resolution."*
 
 ---
 
-### [1:20 – 1:35] Live Learning: Retain in Real-Time
-- **Action**: Scroll to **"Log Today's Meeting Outcome"**, type:
-  `"Met with Jordan today. Handed him the technical integration doc on the spot. Jordan accepted it and we agreed to send enterprise pricing proposal by Thursday."`
-- **Action**: Click **"Retain Meeting Outcome Live"**. Point to the green **"✓ Saved to memory"** confirmation banner.
+### [0:60 – 0:80] Executive Transition: "Account Handoff Brief"
+- **Action**: Click **"Generate Handoff Brief"** under the contact banner.
+- **Screen**: The 4-section Handoff Brief generates via Hindsight `reflect()`.
 - **Presenter**:
-  > *"And when this meeting wraps up, I can log today's outcome in one sentence. A live `client.retain()` call updates the Hindsight memory bank in real time, and the brief updates immediately for meeting #5."*
+  > *"What happens when a new rep or executive takes over this account? Clicking 'Generate Handoff Brief' triggers Hindsight's `reflect()` primitive across the entire multi-meeting bank.*
+  >
+  > *In seconds, it synthesizes: Relationship summary, Open commitments with overdue flags, what Jordan cares about, and a prioritized Week-1 action plan."*
 
 ---
 
-### [1:35 – 1:55] Optional Closing Beat: Portfolio Commitments Dashboard
-- **Action**: Click **"Commitments Dashboard"** in the top navigation bar.
-- **Screen**: Transitions to `/commitments`.
+### [0:80 – 0:90] Closing Beat: Portfolio Health
+- **Action**: Click **"Commitments Dashboard"** in the top navigation.
 - **Presenter**:
-  > *"Finally, Ahead isn't just for one contact. In this Portfolio Dashboard, Hindsight audits all memory banks across our entire client portfolio.*
-  >
-  > *Elena Vance and Marcus Chen are 'On Track' with zero outstanding items, while Jordan Reyes is flagged for immediate executive attention.*
+  > *"And across your entire organization, Ahead audits every memory bank on one dashboard. Never walk into a meeting blindsided. Never break a promise twice."*
+
   >
   > *That is Ahead powered by Hindsight: Know what matters before you meet."*

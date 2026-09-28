@@ -11,14 +11,17 @@ export default function ContactsPage() {
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold tracking-wide">
             <Sparkles className="w-3.5 h-3.5" />
-            Ahead — Know what matters before you meet.
+            Ahead — Never break a promise twice.
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
-            Never Walk Into a Meeting Having Forgotten What You Promised.
+            Never Break a Promise Twice.
           </h1>
+          <p className="text-indigo-200 text-sm sm:text-base font-semibold">
+            Know what matters before you meet.
+          </p>
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-            Generic AI assistants generate cookie-cutter discovery questions because they have zero recollection of your past interactions. 
-            <strong className="text-white font-semibold"> Ahead</strong> leverages persistent Hindsight memory banks to resurrect past agreements, postponed pricing discussions, and forgotten promises.
+            Relationships rarely die from big betrayals—they stall on small forgotten promises. Generic AI assistants generate cookie-cutter discovery questions because they have zero recollection of your past interactions.
+            <strong className="text-white font-semibold"> Ahead</strong> tracks every commitment across persistent Hindsight memory banks until it is kept.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-slate-300">
