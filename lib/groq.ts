@@ -1,5 +1,5 @@
 import Groq from 'groq-sdk';
-import { Contact, RecalledItem } from './types';
+import { Contact, RecalledItem, ExtractedCommitments } from './types';
 
 const PRIMARY_MODEL = 'openai/gpt-oss-120b';
 const FALLBACK_MODEL = 'qwen/qwen3-32b';
@@ -328,6 +328,90 @@ ${reflectionText}`,
       ],
       whatTheyCareAbout: ['Legacy warehouse management system (WMS) integration support', 'Budget constraints & Q1 pricing'],
       firstWeekActions: ['Acknowledge and hand-deliver the overdue technical integration documentation', 'Schedule working session to review licensing terms'],
+    };
+  }
+}
+
+/**
+ * EXTRACT COMMITMENTS FROM NOTES: Analyzes raw meeting notes/bullets to extract:
+ * 1. Promises you made (new commitments + deadlines)
+ * 2. Promises they made (counterpart actions)
+ * 3. Key decisions made
+ * 4. Whether past overdue commitments were fulfilled
+ */
+export async function extractCommitmentsFromNotes(
+  contact: Contact,
+  notesText: string,
+  meetingTitle?: string,
+  apiKeyOverride?: string
+): Promise<ExtractedCommitments> {
+  const messages = [
+    {
+      role: 'system',
+      content: `You are Ahead (tagline: "Never break a promise twice").
+Your job is to analyze raw meeting notes or bullets taken after a meeting with a client/prospect, and extract actionable relationship commitments and decisions.
+
+Extract strictly according to these rules:
+1. "promisesYouMade": Array of clear, actionable commitments or promises that YOU (the user / assistant / vendor) made during the meeting. (e.g. "Send enterprise pricing proposal by Thursday", "Deliver updated integration documentation", "Introduce solutions architect"). Include deadlines whenever stated.
+2. "promisesTheyMade": Array of commitments or actions the CLIENT / PROSPECT promised to take. (e.g. "Jordan to share Q2 budget numbers", "Introduce to VP of Engineering").
+3. "keyDecisions": Array of major agreements, technical confirmations, or scope decisions reached.
+4. "resolvesPastOverdue": Boolean - set to TRUE if these notes state or imply that a previously overdue or pending commitment was fulfilled, completed, or delivered (e.g. "hand-delivered technical doc", "shared integration guide", "provided pricing").
+5. "detectedOverdueResolvedText": Short string describing the resolution if resolvesPastOverdue is true, or null.
+6. "summary": 1-2 sentence executive takeaway of what occurred.
+
+Format your response as strict JSON with this exact schema:
+{
+  "promisesYouMade": ["..."],
+  "promisesTheyMade": ["..."],
+  "keyDecisions": ["..."],
+  "resolvesPastOverdue": boolean,
+  "detectedOverdueResolvedText": string | null,
+  "summary": "..."
+}
+Return ONLY valid JSON. Do not include markdown code block formatting.`,
+    },
+    {
+      role: 'user',
+      content: `Contact: ${contact.name}, ${contact.role} at ${contact.company}
+${meetingTitle ? `Meeting Title / Topic: ${meetingTitle}` : ''}
+
+Raw Meeting Notes:
+${notesText}`,
+    },
+  ];
+
+  try {
+    const { text } = await callGroqWithFallback(messages, 0.1, apiKeyOverride);
+    let cleaned = text.trim();
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+
+    const parsed = JSON.parse(cleaned);
+    return {
+      promisesYouMade: Array.isArray(parsed.promisesYouMade) ? parsed.promisesYouMade : [],
+      promisesTheyMade: Array.isArray(parsed.promisesTheyMade) ? parsed.promisesTheyMade : [],
+      keyDecisions: Array.isArray(parsed.keyDecisions) ? parsed.keyDecisions : [],
+      resolvesPastOverdue: Boolean(parsed.resolvesPastOverdue),
+      detectedOverdueResolvedText: parsed.detectedOverdueResolvedText || undefined,
+      summary: parsed.summary || notesText.slice(0, 150),
+    };
+  } catch (err) {
+    console.warn('[Groq] Fallback commitment extraction from notes:', err);
+    // Deterministic fallback based on basic keyword heuristic
+    const textLower = notesText.toLowerCase();
+    const hasPromise = textLower.includes('promise') || textLower.includes('will send') || textLower.includes('agreed to send');
+    const hasResolved = textLower.includes('delivered') || textLower.includes('sent the') || textLower.includes('accepted');
+
+    return {
+      promisesYouMade: hasPromise ? [notesText.slice(0, 100)] : [],
+      promisesTheyMade: [],
+      keyDecisions: ['Meeting completed and logged to memory bank.'],
+      resolvesPastOverdue: hasResolved,
+      detectedOverdueResolvedText: hasResolved ? 'Referenced deliverable completed in meeting.' : undefined,
+      summary: notesText.slice(0, 150),
     };
   }
 }

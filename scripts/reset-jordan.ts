@@ -7,6 +7,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 import { HindsightClient } from '@vectorize-io/hindsight-client';
 import { getContactById } from '../lib/contacts';
+import { resetNotesForContact } from '../lib/notes-store';
 
 async function resetJordan() {
   console.log('====================================================');
@@ -72,8 +73,13 @@ async function resetJordan() {
       console.error(`  ❌ Failed to retain meeting #${idx + 1}:`, err?.message || err);
     }
   }
+  
+  // Reset meeting notes store to pristine 3 seeded meetings
+  await resetNotesForContact('jordan-reyes');
+  console.log(`  ✅ Reset meeting notes history store for jordan-reyes.`);
 
   // Small delay for consolidation
+
   console.log('\n⏳ Waiting 2 seconds for memory indexing...');
   await new Promise((r) => setTimeout(r, 2000));
 

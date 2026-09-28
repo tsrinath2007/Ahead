@@ -27,8 +27,13 @@ import {
   Copy,
   Check,
   Briefcase,
+  Plus,
+  X,
+  Tag,
+  MessageSquare,
+  ListTodo,
 } from 'lucide-react';
-import { BriefResponse } from '@/lib/types';
+import { BriefResponse, MeetingNote, ExtractedCommitments } from '@/lib/types';
 import { MarkdownContent } from '@/components/MarkdownContent';
 
 export default function BriefDetailPage() {
@@ -65,6 +70,24 @@ export default function BriefDetailPage() {
   } | null>(null);
   const [handoffError, setHandoffError] = useState<string | null>(null);
 
+  // Feature: Meeting Notes Tabs & Modal State
+  const [activeTab, setActiveTab] = useState<'brief' | 'notes'>('brief');
+  const [notesList, setNotesList] = useState<MeetingNote[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+  const [showAddNotesModal, setShowAddNotesModal] = useState(false);
+
+  // New Note Form State
+  const [noteDate, setNoteDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteType, setNoteType] = useState('Working Session');
+  const [noteText, setNoteText] = useState('');
+  const [extractingCommitments, setExtractingCommitments] = useState(false);
+  const [extractedPreview, setExtractedPreview] = useState<ExtractedCommitments | null>(null);
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [savingNote, setSavingNote] = useState(false);
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
+  const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
+
   const fetchBrief = async () => {
     setLoading(true);
     setError(null);
@@ -86,11 +109,112 @@ export default function BriefDetailPage() {
     }
   };
 
+  const fetchNotes = async () => {
+    setLoadingNotes(true);
+    try {
+      const res = await fetch(`/api/notes/${contactId}?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setNotesList(json.notes || []);
+      }
+    } catch (err) {
+      console.error('Failed to load meeting notes:', err);
+    } finally {
+      setLoadingNotes(false);
+    }
+  };
+
   useEffect(() => {
     if (contactId) {
       fetchBrief();
+      fetchNotes();
     }
   }, [contactId]);
+
+  const handleExtractCommitments = async () => {
+    if (!noteText.trim()) return;
+    setExtractingCommitments(true);
+    setExtractError(null);
+    try {
+      const res = await fetch('/api/notes/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactId,
+          notesText: noteText.trim(),
+          meetingTitle: noteTitle.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Failed to extract commitments');
+      }
+      setExtractedPreview(json.extracted);
+    } catch (err: any) {
+      console.error('Error extracting commitments:', err);
+      setExtractError(err?.message || 'Failed to extract commitments');
+    } finally {
+      setExtractingCommitments(false);
+    }
+  };
+
+  const handleSaveMeetingNote = async () => {
+    if (!noteText.trim()) return;
+    setSavingNote(true);
+    setSaveErrorMessage(null);
+    setSaveSuccessMessage(null);
+    try {
+      const finalTitle = noteTitle.trim() || `${noteType} with ${data?.contact.name || 'Client'}`;
+      const res = await fetch('/api/notes/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactId,
+          date: noteDate,
+          title: finalTitle,
+          notes: noteText.trim(),
+          type: noteType,
+          promisesYouMade: extractedPreview?.promisesYouMade || [],
+          promisesTheyMade: extractedPreview?.promisesTheyMade || [],
+          keyDecisions: extractedPreview?.keyDecisions || [],
+          resolvesPastOverdue: Boolean(extractedPreview?.resolvesPastOverdue),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Failed to save meeting note');
+      }
+
+      setSaveSuccessMessage('Meeting note saved & retained into Hindsight memory bank!');
+      await fetchNotes();
+      fetchBrief();
+
+      setTimeout(() => {
+        setShowAddNotesModal(false);
+        setNoteText('');
+        setNoteTitle('');
+        setExtractedPreview(null);
+        setSaveSuccessMessage(null);
+        setActiveTab('notes');
+      }, 1200);
+    } catch (err: any) {
+      console.error('Error saving meeting note:', err);
+      setSaveErrorMessage(err?.message || 'Failed to save meeting note');
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handlePrefillDemoNote = () => {
+    setNoteDate(new Date().toISOString().split('T')[0]);
+    setNoteTitle('Technical Integration Hand-off & Pricing Follow-up');
+    setNoteType('Working Session');
+    setNoteText(
+      'Met with Jordan today for 40 minutes. Hand-delivered the overdue technical integration documentation for their legacy warehouse management system (WMS). Jordan accepted the spec and was relieved to have it resolved. In return, I promised to send an updated enterprise pricing proposal with multi-year tier options by this Thursday at 5 PM. Jordan agreed to review the proposal with their CFO before next Monday.'
+    );
+  };
 
   // Live Retain Handler: initiate confirmation
   const handleInitiateLogMeeting = (e: React.FormEvent) => {
@@ -275,8 +399,8 @@ export default function BriefDetailPage() {
 
   return (
     <div className="space-y-8 pb-16">
-      {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Header: Breadcrumb, Tab Switcher & Quick Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm w-fit transition-colors"
@@ -284,7 +408,47 @@ export default function BriefDetailPage() {
           <ArrowLeft className="w-3.5 h-3.5" /> Back to Contacts
         </Link>
 
+        {/* Tab Switcher */}
+        <div className="inline-flex p-1 bg-slate-200/80 rounded-xl text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => setActiveTab('brief')}
+            className={`px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+              activeTab === 'brief'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Pre-Meeting Brief</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('notes')}
+            className={`px-4 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+              activeTab === 'notes'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Meeting Notes & History</span>
+            <span className="ml-1 text-[10px] px-1.5 py-0.2 bg-indigo-100 text-indigo-800 rounded-full">
+              {notesList.length}
+            </span>
+          </button>
+        </div>
+
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowAddNotesModal(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>+ Add Meeting Notes</span>
+          </button>
+
           <button
             onClick={fetchBrief}
             disabled={loading}
@@ -295,6 +459,7 @@ export default function BriefDetailPage() {
           </button>
         </div>
       </div>
+
 
       {/* Contact Profile Banner */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -358,8 +523,14 @@ export default function BriefDetailPage() {
         </div>
       </div>
 
-      {/* ACCOUNT HANDOFF BRIEF (FEATURE: SECTION 5) */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      {/* ========================================================================= */}
+      {/* TAB 1: PRE-MEETING STRATEGIC BRIEF                                        */}
+      {/* ========================================================================= */}
+      {activeTab === 'brief' && (
+        <div className="space-y-8">
+          {/* ACCOUNT HANDOFF BRIEF (FEATURE: SECTION 5) */}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+
         <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 flex-shrink-0">
@@ -1083,5 +1254,449 @@ export default function BriefDetailPage() {
         </div>
       </div>
     </div>
+  )}
+
+  {/* ========================================================================= */}
+  {/* TAB 2: CHRONOLOGICAL MEETING NOTES & COMMITMENT HISTORY                   */}
+  {/* ========================================================================= */}
+  {activeTab === 'notes' && (
+    <div className="space-y-6">
+      {/* Notes Header Bar */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              Chronological Meeting Notes & Relationship History
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            Every meeting note is retained into Hindsight memory bank{' '}
+            <code className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-mono">{contact.bankId}</code>. Ahead extracts and tracks promises until kept.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowAddNotesModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all self-start sm:self-auto"
+        >
+          <Plus className="w-4 h-4" />
+          <span>+ Add Meeting Notes</span>
+        </button>
+      </div>
+
+      {/* Notes Feed */}
+      {loadingNotes ? (
+        <div className="space-y-4 animate-pulse">
+          <div className="h-32 bg-slate-200 rounded-2xl" />
+          <div className="h-32 bg-slate-200 rounded-2xl" />
+          <div className="h-32 bg-slate-200 rounded-2xl" />
+        </div>
+      ) : notesList.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-4">
+          <Calendar className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold text-slate-800">No meeting notes recorded yet</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Add your first meeting note to begin tracking relationship history and commitments with {contact.name}.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowAddNotesModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Meeting Notes</span>
+          </button>
+        </div>
+      ) : (
+        <div className="relative border-l-2 border-indigo-200 ml-4 pl-6 space-y-8">
+          {notesList.map((note, idx) => {
+            const isOverdue = note.hasOutstandingCommitment && !note.resolvesPastOverdue;
+            const isResolved = note.resolvesPastOverdue;
+
+            return (
+              <div key={note.id || idx} className="relative group">
+                {/* Timeline Node Dot */}
+                <div
+                  className={`absolute -left-[31px] top-6 w-4 h-4 rounded-full border-2 border-white shadow-sm flex items-center justify-center ${
+                    isOverdue
+                      ? 'bg-rose-600 ring-4 ring-rose-100'
+                      : isResolved
+                      ? 'bg-emerald-600 ring-4 ring-emerald-100'
+                      : 'bg-indigo-600 ring-4 ring-indigo-100'
+                  }`}
+                />
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+                  {/* Note Card Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                          Meeting #{notesList.length - idx}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">
+                          {new Date(note.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                        {note.type && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            {note.type}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base font-bold text-slate-900">{note.title}</h3>
+                    </div>
+
+                    {/* Status Badges */}
+                    <div className="flex items-center gap-2">
+                      {isOverdue && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-rose-600 text-white shadow-sm">
+                          <AlertTriangle className="w-3 h-3" />
+                          Outstanding Commitment
+                        </span>
+                      )}
+                      {isResolved && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Fulfilled Past Promise
+                        </span>
+                      )}
+                      {!isOverdue && !isResolved && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                          <Check className="w-3 h-3 text-slate-500" />
+                          On Track
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Notes Body */}
+                  <div className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+                    {note.notes}
+                  </div>
+
+                  {/* Extracted Sections Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    {/* Promises You Made (Tracked Commitments) */}
+                    {note.promisesYouMade && note.promisesYouMade.length > 0 && (
+                      <div className="bg-rose-50/50 border border-rose-200/80 rounded-xl p-3.5 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-rose-900">
+                          <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Promises You Made (Ahead Tracks These)</span>
+                        </div>
+                        <ul className="space-y-1">
+                          {note.promisesYouMade.map((p, i) => (
+                            <li key={i} className="text-xs text-rose-950 font-medium bg-white p-2 rounded-lg border border-rose-100 flex items-start gap-1.5">
+                              <span className="text-rose-600 font-bold">•</span>
+                              <span>{p}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Counterpart Commitments */}
+                    {note.promisesTheyMade && note.promisesTheyMade.length > 0 && (
+                      <div className="bg-blue-50/50 border border-blue-200/80 rounded-xl p-3.5 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                          <Users className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Counterpart Commitments ({contact.name})</span>
+                        </div>
+                        <ul className="space-y-1">
+                          {note.promisesTheyMade.map((p, i) => (
+                            <li key={i} className="text-xs text-blue-950 font-medium bg-white p-2 rounded-lg border border-blue-100 flex items-start gap-1.5">
+                              <span className="text-blue-600 font-bold">•</span>
+                              <span>{p}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Key Decisions Agreed */}
+                    {note.keyDecisions && note.keyDecisions.length > 0 && (
+                      <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-xl p-3.5 space-y-2 md:col-span-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Key Decisions & Alignment</span>
+                        </div>
+                        <ul className="space-y-1">
+                          {note.keyDecisions.map((d, i) => (
+                            <li key={i} className="text-xs text-emerald-950 font-medium bg-white p-2 rounded-lg border border-emerald-100 flex items-start gap-1.5">
+                              <span className="text-emerald-600 font-bold">✓</span>
+                              <span>{d}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  )}
+
+  {/* ========================================================================= */}
+  {/* MODAL: ADD MEETING NOTES & COMMITMENT EXTRACTOR                           */}
+  {/* ========================================================================= */}
+  {showAddNotesModal && (
+    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 p-6 sm:p-8 space-y-6 animate-in fade-in">
+        {/* Modal Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 flex-shrink-0">
+              <MessageSquare className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">
+                Add Meeting Notes & Extract Commitments
+              </h3>
+              <p className="text-xs text-slate-500">
+                Meeting with <strong>{contact.name}</strong> ({contact.role} at {contact.company})
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAddNotesModal(false)}
+            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Quick Prefill Scenario for Jordan Reyes Demo */}
+        {isDemo && (
+          <div className="bg-indigo-50/70 border border-indigo-200 p-3 rounded-xl flex items-center justify-between gap-3 flex-wrap">
+            <div className="text-xs text-indigo-900">
+              <span className="font-bold">⚡ Demo Shortcut:</span> Prefill notes that deliver the overdue technical doc & promise pricing.
+            </div>
+            <button
+              type="button"
+              onClick={handlePrefillDemoNote}
+              className="px-3 py-1 bg-white hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 shadow-xs transition-colors"
+            >
+              Prefill Demo Notes
+            </button>
+          </div>
+        )}
+
+        {/* Form Fields */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Meeting Date
+              </label>
+              <input
+                type="date"
+                value={noteDate}
+                onChange={(e) => setNoteDate(e.target.value)}
+                className="w-full text-xs sm:text-sm p-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Meeting Type
+              </label>
+              <select
+                value={noteType}
+                onChange={(e) => setNoteType(e.target.value)}
+                className="w-full text-xs sm:text-sm p-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none bg-white"
+              >
+                <option value="Working Session">Working Session</option>
+                <option value="Executive Review">Executive Review</option>
+                <option value="Contract & Pricing">Contract & Pricing</option>
+                <option value="Technical Architecture">Technical Architecture</option>
+                <option value="Discovery">Discovery</option>
+                <option value="Check-in">Check-in</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Meeting Title / Topic
+            </label>
+            <input
+              type="text"
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+              placeholder="e.g. Technical Integration Hand-off & Pricing Follow-up"
+              className="w-full text-xs sm:text-sm p-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-700">
+                Discussion Notes / Raw Bullets
+              </label>
+              <span className="text-[11px] text-slate-400">
+                Paste notes, promises made, or key outcomes
+              </span>
+            </div>
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              rows={4}
+              placeholder="e.g. Met with Jordan today. Hand-delivered the technical integration doc. Jordan accepted. I promised to send an updated enterprise pricing proposal by Thursday..."
+              className="w-full text-xs sm:text-sm p-3.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none"
+            />
+          </div>
+
+          {/* Extract Action Button */}
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleExtractCommitments}
+              disabled={extractingCommitments || !noteText.trim()}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 disabled:bg-slate-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition-colors"
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${extractingCommitments ? 'animate-spin' : 'text-indigo-600'}`} />
+              <span>{extractingCommitments ? 'Analyzing with AI...' : 'Extract Commitments & Decisions with AI'}</span>
+            </button>
+
+            <span className="text-[11px] text-slate-400">
+              Runs Groq commitment parser before saving
+            </span>
+          </div>
+
+          {/* Extraction Error */}
+          {extractError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              <span>{extractError}</span>
+            </div>
+          )}
+
+          {/* Extracted Preview Card */}
+          {extractedPreview && (
+            <div className="bg-slate-50 border-2 border-indigo-200 rounded-xl p-4 space-y-3 animate-in fade-in">
+              <div className="flex items-center justify-between text-xs font-bold text-indigo-950">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-indigo-600" />
+                  Extracted Commitments & Decisions:
+                </span>
+                <span className="text-[10px] uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                  AI Verified
+                </span>
+              </div>
+
+              {extractedPreview.resolvesPastOverdue && (
+                <div className="p-2.5 bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-950 text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                  <span>✓ Detected resolution of past overdue commitment!</span>
+                </div>
+              )}
+
+              {/* Promises You Made */}
+              {extractedPreview.promisesYouMade.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-rose-800 block">
+                    • Promises You Made (Ahead Tracks These):
+                  </span>
+                  {extractedPreview.promisesYouMade.map((p, i) => (
+                    <div key={i} className="text-xs bg-white p-2 rounded border border-rose-200 text-rose-950 font-medium">
+                      {p}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Promises They Made */}
+              {extractedPreview.promisesTheyMade.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-blue-800 block">
+                    • Counterpart Commitments ({contact.name}):
+                  </span>
+                  {extractedPreview.promisesTheyMade.map((p, i) => (
+                    <div key={i} className="text-xs bg-white p-2 rounded border border-blue-200 text-blue-950 font-medium">
+                      {p}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Key Decisions */}
+              {extractedPreview.keyDecisions.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-emerald-800 block">
+                    • Key Decisions Agreed:
+                  </span>
+                  {extractedPreview.keyDecisions.map((d, i) => (
+                    <div key={i} className="text-xs bg-white p-2 rounded border border-emerald-200 text-emerald-950 font-medium">
+                      {d}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Modal Bottom Actions */}
+        <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => setShowAddNotesModal(false)}
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveMeetingNote}
+            disabled={savingNote || !noteText.trim()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+          >
+            {savingNote ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Retaining to Bank...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-3.5 h-3.5" />
+                <span>Confirm & Retain in Memory</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Success Message Banner */}
+        {saveSuccessMessage && (
+          <div className="p-4 bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{saveSuccessMessage}</span>
+          </div>
+        )}
+
+        {/* Error Message Banner */}
+        {saveErrorMessage && (
+          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-900 text-xs rounded-xl flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+            <span>{saveErrorMessage}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )}
+    </div>
   );
 }
+
+
+

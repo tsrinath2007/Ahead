@@ -24,11 +24,13 @@ When preparing for a meeting with a client or prospect, traditional AI assistant
 2. **Urgent Commitment Detection**: Explicitly highlights overdue and unfulfilled promises in an amber/red `⚠ Overdue Commitment` callout derived directly from raw recall results before you say a single word.
 3. **Draft Follow-Up Email (Agentic Follow-Through)**: Click "Draft follow-up email" next to any overdue callout to generate an honest, accountable email draft that restates what was promised and gives a concrete delivery time with zero excuses.
 4. **Account Handoff Brief (Transition Intelligence)**: Click "Generate Handoff Brief" when taking over an account to synthesize relationship history, open commitments, client priorities, and a prioritized week-1 action plan via Hindsight `reflect()`.
-5. **Strategic Opening Advice**: Gives you direct guidance on what to lead with in the first 60 seconds to restore trust.
-6. **Memory Transparency Inspector**: Displays the exact raw memories recalled from Hindsight with timestamps and IDs to prove it's real.
-7. **"Why This Brief?" Reasoning Chain**: An expandable panel detailing the 4-step audit trail (*Previous meeting &rarr; What was promised &rarr; Whether it was fulfilled &rarr; Why this matters now*).
-8. **Live Outcome Logging**: Record today's meeting outcome with one click, calling Hindsight's `retain()` live so the agent learns in real time with a visible `✓ Saved to memory` confirmation.
-9. **Portfolio Commitments Dashboard**: Cross-bank dashboard (`/commitments`) auditing all contacts to prove organizational memory across your entire relationship portfolio.
+5. **Meeting Notes & Smart Commitment Extractor**: Log raw meeting notes or bullets. Ahead's AI automatically parses promises you made (new commitments), counterpart action items, key decisions, and detects if previous overdue commitments were resolved before retaining into Hindsight.
+6. **Chronological Meeting Notes & History Timeline**: A dedicated tab displaying all past meeting sessions with date pills, tagged commitments, decisions, and status badges.
+7. **Strategic Opening Advice**: Gives you direct guidance on what to lead with in the first 60 seconds to restore trust.
+8. **Memory Transparency Inspector**: Displays the exact raw memories recalled from Hindsight with timestamps and IDs to prove it's real.
+9. **"Why This Brief?" Reasoning Chain**: An expandable panel detailing the 4-step audit trail (*Previous meeting &rarr; What was promised &rarr; Whether it was fulfilled &rarr; Why this matters now*).
+10. **Live Outcome Logging**: Record today's meeting outcome with one click, calling Hindsight's `retain()` live so the agent learns in real time with a visible `✓ Saved to memory` confirmation.
+11. **Portfolio Commitments Dashboard**: Cross-bank dashboard (`/commitments`) auditing all contacts to prove organizational memory across your entire relationship portfolio.
 
 ---
 
@@ -45,7 +47,11 @@ When preparing for a meeting with a client or prospect, traditional AI assistant
                      ├── /brief/[contactId]         ├── /api/commitments
                      └── /commitments               ├── /api/retain
                                                     ├── /api/followup/[contactId]
-                                                    └── /api/handoff/[contactId]
+                                                    ├── /api/handoff/[contactId]
+                                                    ├── /api/notes/[contactId]
+                                                    ├── /api/notes/extract
+                                                    └── /api/notes/save
+
                                                              │
                                 ┌────────────────────────────┴───────────────────────────┐
                                 │                                                        │

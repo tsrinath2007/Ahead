@@ -1,0 +1,170 @@
+[
+  {
+    "id": "elena-vance-seed-1",
+    "contactId": "elena-vance",
+    "date": "2025-10-12",
+    "title": "Initial analytics platform demo",
+    "notes": "Meeting on October 12, 2025 with Elena Vance: Initial product demo of core analytics capabilities. Discussed their Q4 roadmap. Elena mentioned they are evaluating 3 vendors for their autonomous fleet management.",
+    "type": "Discovery & Budget",
+    "promisesYouMade": [],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "Initial analytics platform demo"
+    ],
+    "hasOutstandingCommitment": false,
+    "resolvesPastOverdue": false,
+    "createdAt": "2025-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "elena-vance-seed-2",
+    "contactId": "elena-vance",
+    "date": "2025-11-04",
+    "title": "SSO and RBAC compliance review",
+    "notes": "Meeting on November 04, 2025 with Elena Vance: Explored single sign-on (SSO) and RBAC requirements. Provided documentation on SAML and Okta support. Elena confirmed requirements were completely satisfied.",
+    "type": "Technical Architecture",
+    "promisesYouMade": [],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "SAML and Okta SSO compliance requirements completely satisfied"
+    ],
+    "hasOutstandingCommitment": false,
+    "resolvesPastOverdue": false,
+    "createdAt": "2025-11-04T00:00:00.000Z"
+  },
+  {
+    "id": "elena-vance-seed-3",
+    "contactId": "elena-vance",
+    "date": "2025-12-15",
+    "title": "End-of-year roadmap sync",
+    "notes": "Meeting on December 15, 2025 with Elena Vance: End-of-year sync. Elena mentioned their engineering team is locked until next budget cycle. All previous action items were fully resolved.",
+    "type": "Check-in",
+    "promisesYouMade": [],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "End-of-year roadmap sync"
+    ],
+    "hasOutstandingCommitment": false,
+    "resolvesPastOverdue": false,
+    "createdAt": "2025-12-15T00:00:00.000Z"
+  },
+  {
+    "id": "marcus-chen-seed-1",
+    "contactId": "marcus-chen",
+    "date": "2025-09-18",
+    "title": "Latency & throughput architecture review",
+    "notes": "Meeting on September 18, 2025 with Marcus Chen: Technical architecture review regarding API latency and rate limits. Marcus confirmed standard tier limits are sufficient for their workloads.",
+    "type": "Discovery & Budget",
+    "promisesYouMade": [],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "Standard tier API latency and rate limits confirmed sufficient"
+    ],
+    "hasOutstandingCommitment": false,
+    "resolvesPastOverdue": false,
+    "createdAt": "2025-09-18T00:00:00.000Z"
+  },
+  {
+    "id": "marcus-chen-seed-2",
+    "contactId": "marcus-chen",
+    "date": "2025-10-22",
+    "title": "Security and compliance questionnaire",
+    "notes": "Meeting on October 22, 2025 with Marcus Chen: Security questionnaire walkthrough. Compliance team cleared SOC2 Type II report with zero findings.",
+    "type": "Technical Architecture",
+    "promisesYouMade": [],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "SAML and Okta SSO compliance requirements completely satisfied"
+    ],
+    "hasOutstandingCommitment": false,
+    "resolvesPastOverdue": false,
+    "createdAt": "2025-10-22T00:00:00.000Z"
+  },
+  {
+    "id": "marcus-chen-seed-3",
+    "contactId": "marcus-chen",
+    "date": "2025-11-29",
+    "title": "Sandbox migration completion",
+    "notes": "Meeting on November 29, 2025 with Marcus Chen: Catch-up on sandbox migration. Marcus reported migration was successful with no blockers or open questions.",
+    "type": "Check-in",
+    "promisesYouMade": [],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "Sandbox migration completed successfully with zero blockers"
+    ],
+    "hasOutstandingCommitment": false,
+    "resolvesPastOverdue": false,
+    "createdAt": "2025-11-29T00:00:00.000Z"
+  },
+  {
+    "contactId": "elena-vance",
+    "date": "2026-09-28",
+    "title": "Vendor Evaluation & Security Assessment",
+    "notes": "Met with Elena Vance to discuss their 3-vendor autonomous fleet evaluation. Elena requested a copy of our ISO 27001 certificate and penetration testing executive summary. I promised to send the security package by Wednesday afternoon.",
+    "type": "Security Review",
+    "promisesYouMade": [
+      "Send ISO 27001 certificate and penetration testing summary by Wednesday afternoon"
+    ],
+    "promisesTheyMade": [
+      "Elena will review security package with compliance lead"
+    ],
+    "keyDecisions": [
+      "Acme Robotics narrowed vendor selection to 2 finalists"
+    ],
+    "resolvesPastOverdue": false,
+    "hasOutstandingCommitment": true,
+    "id": "elena-vance-1790607019998",
+    "createdAt": "2026-09-28T14:50:19.998Z"
+  },
+  {
+    "id": "jordan-reyes-seed-1",
+    "contactId": "jordan-reyes",
+    "date": "2025-11-14",
+    "title": "Budget & pricing discussion",
+    "notes": "Meeting on November 14, 2025 with Jordan Reyes: Discussed budget and enterprise licensing tiers for the upcoming year. Jordan said current budget is locked for Q4 and explicitly said: 'let's revisit pricing next quarter.'",
+    "type": "Discovery & Budget",
+    "promisesYouMade": [],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "Current budget is locked for Q4",
+      "Revisit pricing next quarter (Q1 2026)"
+    ],
+    "hasOutstandingCommitment": false,
+    "resolvesPastOverdue": false,
+    "createdAt": "2025-11-14T00:00:00.000Z"
+  },
+  {
+    "id": "jordan-reyes-seed-2",
+    "contactId": "jordan-reyes",
+    "date": "2025-12-19",
+    "title": "Integration support concern & unfulfilled commitment",
+    "notes": "Meeting on December 19, 2025 with Jordan Reyes: Jordan raised a major concern about integration support with their legacy warehouse management system. I PROMISED to send a technical follow-up doc on integration support within 48 hours. As of today this has NOT been sent — this is an outstanding, unfulfilled commitment and is now significantly overdue.",
+    "type": "Technical Architecture",
+    "promisesYouMade": [
+      "Send technical follow-up doc on integration support within 48 hours (OVERDUE)"
+    ],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "Jordan raised major concern about legacy warehouse management system integration"
+    ],
+    "hasOutstandingCommitment": true,
+    "resolvesPastOverdue": false,
+    "createdAt": "2025-12-19T00:00:00.000Z"
+  },
+  {
+    "id": "jordan-reyes-seed-3",
+    "contactId": "jordan-reyes",
+    "date": "2026-01-16",
+    "title": "Light scheduling & check-in call",
+    "notes": "Meeting on January 16, 2026 with Jordan Reyes: Light rescheduling call to align on calendar availability for our next working session. No major technical or pricing decisions discussed.",
+    "type": "Check-in",
+    "promisesYouMade": [],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "Current budget is locked for Q4",
+      "Revisit pricing next quarter (Q1 2026)"
+    ],
+    "hasOutstandingCommitment": false,
+    "resolvesPastOverdue": false,
+    "createdAt": "2026-01-16T00:00:00.000Z"
+  }
+]

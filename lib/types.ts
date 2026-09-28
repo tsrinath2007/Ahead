@@ -57,3 +57,28 @@ export interface RetainRequestPayload {
   contactId: string;
   outcomeText: string;
 }
+
+export interface MeetingNote {
+  id: string;
+  contactId: string;
+  date: string;
+  title: string;
+  notes: string;
+  type?: string;
+  promisesYouMade: string[];
+  promisesTheyMade: string[];
+  keyDecisions: string[];
+  resolvesPastOverdue?: boolean;
+  hasOutstandingCommitment?: boolean;
+  createdAt: string;
+}
+
+export interface ExtractedCommitments {
+  promisesYouMade: string[];
+  promisesTheyMade: string[];
+  keyDecisions: string[];
+  resolvesPastOverdue: boolean;
+  detectedOverdueResolvedText?: string;
+  summary: string;
+}
+
