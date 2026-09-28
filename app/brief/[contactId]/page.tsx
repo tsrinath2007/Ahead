@@ -180,11 +180,12 @@ export default function BriefDetailPage() {
     setExtractingCommitments(true);
     setExtractError(null);
     try {
+      const activeContactId = data?.contact?.id || contactId;
       const res = await fetch('/api/notes/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contactId,
+          contactId: activeContactId,
           notesText: noteText.trim(),
           meetingTitle: noteTitle.trim() || undefined,
         }),
@@ -208,12 +209,13 @@ export default function BriefDetailPage() {
     setSaveErrorMessage(null);
     setSaveSuccessMessage(null);
     try {
-      const finalTitle = noteTitle.trim() || `${noteType} with ${data?.contact.name || 'Client'}`;
+      const activeContactId = data?.contact?.id || contactId;
+      const finalTitle = noteTitle.trim() || `${noteType} with ${data?.contact?.name || 'Client'}`;
       const res = await fetch('/api/notes/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contactId,
+          contactId: activeContactId,
           date: noteDate,
           title: finalTitle,
           notes: noteText.trim(),

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById, updateContact, deleteContact } from '@/lib/contacts-store';
+import { getContactById, getOrCreateContact, updateContact, deleteContact } from '@/lib/contacts-store';
 import { deleteNotesForContact } from '@/lib/notes-store';
 
 export const dynamic = 'force-dynamic';
@@ -10,13 +10,9 @@ export async function GET(
   { params }: { params: { contactId: string } }
 ) {
   try {
-    const contact = getContactById(params.contactId);
-    if (!contact) {
-      return NextResponse.json(
-        { error: `Contact with ID "${params.contactId}" not found.` },
-        { status: 404 }
-      );
-    }
+    const rawContactId = params.contactId || '';
+    const contactId = decodeURIComponent(rawContactId).trim();
+    const contact = getOrCreateContact(contactId);
     return NextResponse.json({ contact });
   } catch (error: any) {
     return NextResponse.json(

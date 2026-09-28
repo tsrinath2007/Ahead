@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts-store';
+import { getOrCreateContact } from '@/lib/contacts-store';
 import { retainMemory, isHindsightConfigured } from '@/lib/hindsight';
 import { saveNoteForContact } from '@/lib/notes-store';
 
@@ -27,13 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contact = getContactById(contactId);
-    if (!contact) {
-      return NextResponse.json(
-        { error: `Contact with ID "${contactId}" not found.` },
-        { status: 404 }
-      );
-    }
+    const contact = getOrCreateContact(contactId);
 
     const meetingDate = date || new Date().toISOString().split('T')[0];
 

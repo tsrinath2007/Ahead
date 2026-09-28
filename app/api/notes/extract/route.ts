@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts-store';
+import { getOrCreateContact } from '@/lib/contacts-store';
 import { extractCommitmentsFromNotes, isGroqConfigured } from '@/lib/groq';
 
 export const dynamic = 'force-dynamic';
@@ -16,13 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contact = getContactById(contactId);
-    if (!contact) {
-      return NextResponse.json(
-        { error: `Contact with ID "${contactId}" not found.` },
-        { status: 404 }
-      );
-    }
+    const contact = getOrCreateContact(contactId);
 
     const apiKeyOverride = request.headers.get('x-groq-api-key') || undefined;
 

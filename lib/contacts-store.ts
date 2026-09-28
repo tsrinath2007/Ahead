@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Contact, MeetingMemoryRecord } from './types';
 import { SEEDED_CONTACTS } from './contacts';
+import { isHindsightConfigured, createBankIfNotExists } from './hindsight';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const CONTACTS_FILE = path.resolve(DATA_DIR, 'contacts.json');
@@ -53,6 +54,55 @@ export function getContactById(id: string): (Contact & { meetings: MeetingMemory
     (slugified ? all.find((c) => c.id.toLowerCase() === slugified) : undefined) ||
     all.find((c) => c.name.toLowerCase() === decoded)
   );
+}
+
+export function getOrCreateContact(idOrName: string): Contact & { meetings: MeetingMemoryRecord[] } {
+  if (!idOrName || typeof idOrName !== 'string' || !idOrName.trim()) {
+    return createNewContact({
+      name: 'Executive Contact',
+      role: 'Executive Partner',
+      company: 'Enterprise Organization',
+      tagline: 'Stakeholder dossier for Executive Contact',
+    });
+  }
+
+  const existing = getContactById(idOrName);
+  if (existing) return existing;
+
+  const raw = idOrName.trim();
+  const decoded = decodeURIComponent(raw).trim();
+  const cleanId = decoded
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+  const words = (cleanId || 'Executive Contact')
+    .split('-')
+    .filter(Boolean);
+
+  const formattedName =
+    words.length > 0
+      ? words.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+      : 'Executive Contact';
+
+  const newContact = createNewContact({
+    id: cleanId || undefined,
+    name: formattedName,
+    role: 'Executive Partner',
+    company: 'Enterprise Organization',
+    tagline: `Stakeholder dossier for ${formattedName}`,
+  });
+
+  if (isHindsightConfigured()) {
+    createBankIfNotExists(
+      newContact.bankId,
+      `${newContact.name} - ${newContact.company}`,
+      `Executive relationship and commitment tracking for ${newContact.name}.`
+    ).catch((err) => console.warn('[Auto-provision Hindsight]', err?.message || err));
+  }
+
+  return newContact;
 }
 
 export function createNewContact(input: {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts-store';
+import { getOrCreateContact } from '@/lib/contacts-store';
 import { getNotesForContact } from '@/lib/notes-store';
 
 export const dynamic = 'force-dynamic';
@@ -12,17 +12,8 @@ export async function GET(
   try {
     const rawId = params.contactId || '';
     const contactId = decodeURIComponent(rawId).trim();
-    const contact = getContactById(contactId);
-
-    if (!contact) {
-      return NextResponse.json({
-        contact: null,
-        notes: [],
-        count: 0,
-      });
-    }
-
-    const notes = await getNotesForContact(contactId);
+    const contact = getOrCreateContact(contactId);
+    const notes = await getNotesForContact(contact.id);
 
     return NextResponse.json({
       contact,

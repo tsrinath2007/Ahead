@@ -204,5 +204,23 @@
     "hasOutstandingCommitment": true,
     "id": "srinath-thota-1790611632277",
     "createdAt": "2026-09-28T16:07:12.277Z"
+  },
+  {
+    "contactId": "ghb-nm",
+    "date": "2026-09-28",
+    "title": "Sprint sync",
+    "notes": "Discussed API integration. Promised to deliver webhook specs by Friday.",
+    "type": "Meeting",
+    "promisesYouMade": [
+      "Deliver webhook specs by Friday"
+    ],
+    "promisesTheyMade": [
+      "Approve contract by Monday"
+    ],
+    "keyDecisions": [],
+    "resolvesPastOverdue": false,
+    "hasOutstandingCommitment": true,
+    "id": "ghb-nm-1790619988125",
+    "createdAt": "2026-09-28T18:26:28.125Z"
   }
 ]
