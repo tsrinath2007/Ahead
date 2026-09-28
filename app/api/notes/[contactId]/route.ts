@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts';
+import { getContactById } from '@/lib/contacts-store';
 import { getNotesForContact } from '@/lib/notes-store';
 
 export const dynamic = 'force-dynamic';

@@ -32,9 +32,18 @@ import {
   Tag,
   MessageSquare,
   ListTodo,
+  Phone,
 } from 'lucide-react';
 import { BriefResponse, MeetingNote, ExtractedCommitments } from '@/lib/types';
 import { MarkdownContent } from '@/components/MarkdownContent';
+
+function LinkedinIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9h2.77v8.37H6.46v-8.37M7.84 6.2a1.62 1.62 0 1 0 0 3.24 1.62 1.62 0 0 0 0-3.24Z" />
+    </svg>
+  );
+}
 
 export default function BriefDetailPage() {
   const params = useParams();
@@ -507,8 +516,45 @@ export default function BriefDetailPage() {
                 bank: {contact.bankId}
               </span>
             </div>
+
+            {/* Contact Dossier: Email, Phone, LinkedIn */}
+            {(contact.email || contact.phone || contact.linkedin) && (
+              <div className="flex items-center gap-3 text-xs text-slate-600 mt-2.5 flex-wrap">
+                {contact.email && (
+                  <a
+                    href={`mailto:${contact.email}`}
+                    className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 hover:underline bg-indigo-50/70 border border-indigo-100 px-2.5 py-0.5 rounded-md font-medium"
+                  >
+                    <Mail className="w-3 h-3 text-indigo-500" />
+                    <span>{contact.email}</span>
+                  </a>
+                )}
+                {contact.phone && (
+                  <a
+                    href={`tel:${contact.phone}`}
+                    className="inline-flex items-center gap-1.5 text-slate-700 hover:text-slate-900 hover:underline bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md font-medium"
+                  >
+                    <Phone className="w-3 h-3 text-slate-500" />
+                    <span>{contact.phone}</span>
+                  </a>
+                )}
+                {contact.linkedin && (
+                  <a
+                    href={contact.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline bg-blue-50/70 border border-blue-100 px-2.5 py-0.5 rounded-md font-medium"
+                  >
+                    <LinkedinIcon className="w-3 h-3 text-blue-600" />
+                    <span>LinkedIn Profile</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
+
 
         <div className="flex items-center gap-3 text-xs bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl">
           <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
@@ -807,29 +853,45 @@ export default function BriefDetailPage() {
                 {/* Follow-up Draft Card */}
                 {followupDraft && (
                   <div className="bg-white border-2 border-rose-300 rounded-xl p-4 shadow-sm space-y-2.5 animate-in fade-in">
-                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 flex-wrap">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                         <Mail className="w-4 h-4 text-rose-600" />
                         <span>Accountable Follow-up Email Draft</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleCopyDraft}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md transition-colors"
-                      >
-                        {copiedDraft ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-600" />
-                            <span>Copied!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" />
-                            <span>Copy Draft</span>
-                          </>
+
+                      <div className="flex items-center gap-2">
+                        {contact.email && (
+                          <a
+                            href={`mailto:${contact.email}?subject=${encodeURIComponent(
+                              'Follow-up regarding technical integration support'
+                            )}&body=${encodeURIComponent(followupDraft)}`}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700 px-2.5 py-1 rounded-md transition-colors shadow-xs"
+                          >
+                            <Mail className="w-3 h-3" />
+                            <span>Send Email</span>
+                          </a>
                         )}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={handleCopyDraft}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md transition-colors"
+                        >
+                          {copiedDraft ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-600" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copy Draft</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
+
+
                     <div className="bg-slate-50 p-3.5 rounded-lg text-xs text-slate-800 leading-relaxed font-mono whitespace-pre-wrap border border-slate-200">
                       {followupDraft}
                     </div>

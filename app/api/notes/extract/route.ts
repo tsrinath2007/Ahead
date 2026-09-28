@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts';
+import { getContactById } from '@/lib/contacts-store';
 import { extractCommitmentsFromNotes, isGroqConfigured } from '@/lib/groq';
 
 export const dynamic = 'force-dynamic';

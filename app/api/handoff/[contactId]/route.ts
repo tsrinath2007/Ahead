@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts';
+import { getContactById } from '@/lib/contacts-store';
 import { reflectOnBank, isHindsightConfigured } from '@/lib/hindsight';
 import { formatHandoffBrief, isGroqConfigured } from '@/lib/groq';
 

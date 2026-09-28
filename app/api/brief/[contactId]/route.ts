@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts';
+import { getContactById } from '@/lib/contacts-store';
 import { recallMemories, reflectOnBank, isHindsightConfigured } from '@/lib/hindsight';
 import { generateGenericBrief, generateHindsightBrief, isGroqConfigured } from '@/lib/groq';
 import { BriefResponse, RecalledItem } from '@/lib/types';

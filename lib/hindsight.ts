@@ -125,3 +125,25 @@ export async function reflectOnBank(bankId: string, query: string): Promise<stri
     );
   }
 }
+
+/**
+ * Creates a new memory bank in Hindsight if it doesn't already exist
+ */
+export async function createBankIfNotExists(
+  bankId: string,
+  name: string,
+  mission?: string
+): Promise<{ success: boolean; error?: string }> {
+  const client = getHindsightClient();
+  try {
+    await client.createBank(bankId, {
+      name,
+      reflectMission: mission || `Executive relationship and commitment tracking for ${name}.`,
+    });
+    return { success: true };
+  } catch (err: any) {
+    console.log(`[Hindsight] createBank note for ${bankId}:`, err?.message || err);
+    return { success: false, error: err?.message };
+  }
+}
+

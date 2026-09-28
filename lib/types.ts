@@ -7,7 +7,12 @@ export interface Contact {
   avatar: string;
   tagline: string;
   isDemoFocus?: boolean;
+  email?: string;
+  phone?: string;
+  linkedin?: string;
+  createdAt?: string;
 }
+
 
 export interface MeetingMemoryRecord {
   date: string;

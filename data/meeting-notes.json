@@ -166,5 +166,23 @@
     "hasOutstandingCommitment": false,
     "resolvesPastOverdue": false,
     "createdAt": "2026-01-16T00:00:00.000Z"
+  },
+  {
+    "contactId": "sarah-lin",
+    "date": "2026-09-28",
+    "title": "Introductory Discovery & SLA Review",
+    "notes": "Had an introductory scoping call with Sarah Lin. Discussed their Q2 multi-region deployment. I promised to send our SOC2 Type II compliance audit and pricing proposal by this Friday. Sarah said she will introduce us to their Head of Security once the package is reviewed.",
+    "type": "Discovery",
+    "promisesYouMade": [
+      "Had an introductory scoping call with Sarah Lin. Discussed their Q2 multi-region deployment. I promised to send our SOC2"
+    ],
+    "promisesTheyMade": [],
+    "keyDecisions": [
+      "Introductory Discovery & SLA Review"
+    ],
+    "resolvesPastOverdue": false,
+    "hasOutstandingCommitment": true,
+    "id": "sarah-lin-1790608425324",
+    "createdAt": "2026-09-28T15:13:45.324Z"
   }
 ]

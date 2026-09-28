@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SEEDED_CONTACTS } from '@/lib/contacts';
+import { getAllContacts } from '@/lib/contacts-store';
 import { recallMemories, isHindsightConfigured } from '@/lib/hindsight';
 
 export const dynamic = 'force-dynamic';
@@ -7,12 +7,13 @@ export const revalidate = 0;
 
 export async function GET() {
   const hindsightConfigured = isHindsightConfigured();
+  const allContacts = getAllContacts();
 
   const results = [];
   let totalOutstanding = 0;
   let contactsNeedingAttention = 0;
 
-  for (const contact of SEEDED_CONTACTS) {
+  for (const contact of allContacts) {
     let rawRecalls = [];
     interface OverdueItem {
       id: string;
@@ -94,9 +95,9 @@ export async function GET() {
 
   const payload = {
     summary: {
-      totalContacts: SEEDED_CONTACTS.length,
+      totalContacts: allContacts.length,
       contactsNeedingAttention,
-      contactsOnTrack: SEEDED_CONTACTS.length - contactsNeedingAttention,
+      contactsOnTrack: allContacts.length - contactsNeedingAttention,
       totalOutstandingCommitments: totalOutstanding,
       hindsightConnected: hindsightConfigured,
       timestamp: new Date().toISOString(),
