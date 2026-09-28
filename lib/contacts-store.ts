@@ -111,3 +111,49 @@ export function createNewContact(input: {
   saveAllContacts(all);
   return newContact;
 }
+
+export function updateContact(
+  id: string,
+  updates: Partial<Pick<Contact, 'name' | 'role' | 'company' | 'email' | 'phone' | 'linkedin' | 'tagline'>>
+): (Contact & { meetings: MeetingMemoryRecord[] }) | null {
+  const all = getAllContacts();
+  const index = all.findIndex((c) => c.id === id);
+  if (index === -1) return null;
+
+  const current = all[index];
+  let avatar = current.avatar;
+  if (updates.name && updates.name.trim()) {
+    const parts = updates.name.trim().split(/\s+/);
+    avatar =
+      parts.length >= 2
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : updates.name.trim().slice(0, 2).toUpperCase();
+  }
+
+  const updated: Contact & { meetings: MeetingMemoryRecord[] } = {
+    ...current,
+    name: updates.name !== undefined ? updates.name.trim() : current.name,
+    role: updates.role !== undefined ? updates.role.trim() : current.role,
+    company: updates.company !== undefined ? updates.company.trim() : current.company,
+    tagline: updates.tagline !== undefined ? updates.tagline.trim() : current.tagline,
+    email: updates.email !== undefined ? (updates.email.trim() || undefined) : current.email,
+    phone: updates.phone !== undefined ? (updates.phone.trim() || undefined) : current.phone,
+    linkedin: updates.linkedin !== undefined ? (updates.linkedin.trim() || undefined) : current.linkedin,
+    avatar,
+  };
+
+  all[index] = updated;
+  saveAllContacts(all);
+  return updated;
+}
+
+export function deleteContact(id: string): boolean {
+  const all = getAllContacts();
+  const index = all.findIndex((c) => c.id === id);
+  if (index === -1) return false;
+
+  all.splice(index, 1);
+  saveAllContacts(all);
+  return true;
+}
+

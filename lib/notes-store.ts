@@ -118,3 +118,10 @@ export async function resetNotesForContact(contactId: string): Promise<void> {
   const pristine = generateInitialNotes().filter((n) => n.contactId === contactId);
   saveAllNotes([...remaining, ...pristine]);
 }
+
+export async function deleteNotesForContact(contactId: string): Promise<void> {
+  const all = loadAllNotes();
+  const remaining = all.filter((n) => n.contactId !== contactId);
+  saveAllNotes(remaining);
+}
+

@@ -33,9 +33,11 @@ import {
   MessageSquare,
   ListTodo,
   Phone,
+  Pencil,
 } from 'lucide-react';
 import { BriefResponse, MeetingNote, ExtractedCommitments } from '@/lib/types';
 import { MarkdownContent } from '@/components/MarkdownContent';
+import { EditContactModal } from '@/components/EditContactModal';
 
 function LinkedinIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   return (
@@ -55,6 +57,7 @@ export default function BriefDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [whyBriefOpen, setWhyBriefOpen] = useState(true);
   const [showAllMemories, setShowAllMemories] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Live "Log this meeting" state
   const [outcomeText, setOutcomeText] = useState('');
@@ -599,15 +602,26 @@ export default function BriefDetailPage() {
         </div>
 
 
-        <div className="flex items-center gap-3 text-xs bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl">
-          <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-          <div>
-            <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider">
-              Upcoming Event
-            </span>
-            <span className="font-bold text-slate-800">
-              Meeting #4 (Today) • Strategy & Working Session
-            </span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowEditModal(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200 shadow-sm"
+          >
+            <Pencil className="w-3.5 h-3.5 text-slate-500" />
+            <span>Edit Contact Info</span>
+          </button>
+
+          <div className="flex items-center gap-3 text-xs bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl">
+            <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+            <div>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider">
+                Upcoming Event
+              </span>
+              <span className="font-bold text-slate-800">
+                Meeting #{notesList.length > 0 ? notesList.length + 1 : 1} (Today) • Strategy &amp; Working Session
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -1799,6 +1813,23 @@ export default function BriefDetailPage() {
       </div>
     </div>
   )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: EDIT CONTACT DOSSIER                                                */}
+      {/* ========================================================================= */}
+      {showEditModal && data?.contact && (
+        <EditContactModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          contact={data.contact}
+          onSuccess={(updated) => {
+            setData((prev) => (prev ? { ...prev, contact: { ...prev.contact, ...updated } } : prev));
+          }}
+          onDelete={() => {
+            router.push('/');
+          }}
+        />
+      )}
     </div>
   );
 }

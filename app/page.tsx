@@ -23,7 +23,9 @@ import {
   UserPlus,
   RefreshCw,
   AlertTriangle,
+  Pencil,
 } from 'lucide-react';
+import { EditContactModal } from '@/components/EditContactModal';
 
 function LinkedinIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   return (
@@ -40,6 +42,7 @@ export default function ContactsPage() {
   );
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
 
   // New Contact Form State
   const [name, setName] = useState('');
@@ -254,18 +257,31 @@ export default function ContactsPage() {
                       </div>
                     </div>
 
-                    {/* Relationship Health Badge */}
-                    {hasOverdue ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-sm ring-1 ring-rose-300">
-                        <Flame className="w-3 h-3" />
-                        Needs Attention
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        On Track
-                      </span>
-                    )}
+                    {/* Relationship Health Badge & Edit Action */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {hasOverdue ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-sm ring-1 ring-rose-300">
+                          <Flame className="w-3 h-3" />
+                          Needs Attention
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          On Track
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingContact(contact);
+                        }}
+                        title="Edit Contact Dossier"
+                        className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Company & Bank ID */}
@@ -600,6 +616,25 @@ export default function ContactsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: EDIT CONTACT DOSSIER                                                */}
+      {/* ========================================================================= */}
+      {editingContact && (
+        <EditContactModal
+          isOpen={Boolean(editingContact)}
+          onClose={() => setEditingContact(null)}
+          contact={editingContact}
+          onSuccess={(updated) => {
+            setContacts((prev) =>
+              prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+            );
+          }}
+          onDelete={(deletedId) => {
+            setContacts((prev) => prev.filter((c) => c.id !== deletedId));
+          }}
+        />
       )}
     </div>
   );

@@ -123,14 +123,14 @@
   {
     "id": "srinath-thota",
     "name": "Srinath Thota",
-    "role": "Founder",
+    "role": "Founder & CEO",
     "company": "Ahead Tech",
     "bankId": "contact-srinath-thota",
     "avatar": "ST",
-    "tagline": "Founder & Lead Architect — Leading executive AI relationship intelligence",
+    "tagline": "Custom test tagline",
     "isDemoFocus": false,
-    "email": "srinath@ahead.app",
-    "phone": "+1 (415) 555-0199",
+    "email": "test@example.com",
+    "phone": "+1 234 567 8900",
     "linkedin": "https://linkedin.com/in/srinath-thota",
     "createdAt": "2026-09-28T16:04:59.998Z",
     "meetings": [
