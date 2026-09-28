@@ -1,10 +1,30 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { MeetingNote } from './types';
 import { SEEDED_CONTACTS } from './contacts';
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const BASE_DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = IS_SERVERLESS ? path.join(os.tmpdir(), 'ahead-data') : BASE_DATA_DIR;
 const NOTES_FILE = path.resolve(DATA_DIR, 'meeting-notes.json');
+
+function ensureNotesFiles() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+
+    if (IS_SERVERLESS && !fs.existsSync(NOTES_FILE)) {
+      const sourceNotes = path.resolve(BASE_DATA_DIR, 'meeting-notes.json');
+      if (fs.existsSync(sourceNotes)) {
+        fs.copyFileSync(sourceNotes, NOTES_FILE);
+      }
+    }
+  } catch (err) {
+    console.warn('[notes-store] ensureNotesFiles warning:', err);
+  }
+}
 
 function generateInitialNotes(): MeetingNote[] {
   const notes: MeetingNote[] = [];
@@ -54,9 +74,7 @@ function generateInitialNotes(): MeetingNote[] {
 
 function loadAllNotes(): MeetingNote[] {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
+    ensureNotesFiles();
 
     if (!fs.existsSync(NOTES_FILE)) {
       const initial = generateInitialNotes();
@@ -78,9 +96,7 @@ function loadAllNotes(): MeetingNote[] {
 
 function saveAllNotes(notes: MeetingNote[]) {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
+    ensureNotesFiles();
     fs.writeFileSync(NOTES_FILE, JSON.stringify(notes, null, 2), 'utf-8');
   } catch (err) {
     console.error('[notes-store] Error writing meeting notes file:', err);
@@ -89,7 +105,12 @@ function saveAllNotes(notes: MeetingNote[]) {
 
 export async function getNotesForContact(contactId: string): Promise<MeetingNote[]> {
   const all = loadAllNotes();
-  const contactNotes = all.filter((n) => n.contactId === contactId);
+  const cleanId = (contactId || '').trim().toLowerCase();
+  const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const contactNotes = all.filter((n) => {
+    const nid = (n.contactId || '').toLowerCase();
+    return nid === cleanId || (slugified && nid === slugified);
+  });
   // Sort descending by date (most recent first)
   return contactNotes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
@@ -112,16 +133,29 @@ export async function saveNoteForContact(
 
 export async function resetNotesForContact(contactId: string): Promise<void> {
   const all = loadAllNotes();
+  const cleanId = (contactId || '').trim().toLowerCase();
+  const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   // Filter out all notes for this contact
-  const remaining = all.filter((n) => n.contactId !== contactId);
+  const remaining = all.filter((n) => {
+    const nid = (n.contactId || '').toLowerCase();
+    return nid !== cleanId && (!slugified || nid !== slugified);
+  });
   // Re-generate pristine seed notes for this contact
-  const pristine = generateInitialNotes().filter((n) => n.contactId === contactId);
+  const pristine = generateInitialNotes().filter((n) => {
+    const nid = (n.contactId || '').toLowerCase();
+    return nid === cleanId || (slugified && nid === slugified);
+  });
   saveAllNotes([...remaining, ...pristine]);
 }
 
 export async function deleteNotesForContact(contactId: string): Promise<void> {
   const all = loadAllNotes();
-  const remaining = all.filter((n) => n.contactId !== contactId);
+  const cleanId = (contactId || '').trim().toLowerCase();
+  const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const remaining = all.filter((n) => {
+    const nid = (n.contactId || '').toLowerCase();
+    return nid !== cleanId && (!slugified || nid !== slugified);
+  });
   saveAllNotes(remaining);
 }
 

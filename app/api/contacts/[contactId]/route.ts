@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById, getOrCreateContact, updateContact, deleteContact, markContactDeleted } from '@/lib/contacts-store';
+import { getContactById, getOrCreateContact, resolveContact, updateContact, deleteContact, markContactDeleted } from '@/lib/contacts-store';
 import { deleteNotesForContact } from '@/lib/notes-store';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ export async function GET(
   try {
     const rawContactId = params.contactId || '';
     const contactId = decodeURIComponent(rawContactId).trim();
-    const contact = getOrCreateContact(contactId);
+    const contact = resolveContact(contactId, request.headers.get('x-contact-data'));
     if (!contact) {
       return NextResponse.json(
         { error: `Contact "${contactId}" was deleted or not found.`, deleted: true },

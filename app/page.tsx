@@ -37,6 +37,7 @@ function LinkedinIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
 }
 
 const LOCAL_DELETED_KEY = 'ahead_deleted_contacts_v1';
+const LOCAL_CUSTOM_KEY = 'ahead_custom_contacts_v1';
 
 function getLocalDeletedIds(): string[] {
   if (typeof window === 'undefined') return [];
@@ -65,8 +66,45 @@ function removeLocalDeletedId(id: string) {
     const current = getLocalDeletedIds();
     const cleanId = (id || '').trim().toLowerCase();
     const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const updated = current.filter((x) => x !== cleanId && x !== slugified);
+    const updated = current.filter((x) => {
+      const norm = (x || '').toLowerCase();
+      const slug = norm.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return norm !== cleanId && slug !== slugified && norm !== slugified && slug !== cleanId;
+    });
     localStorage.setItem(LOCAL_DELETED_KEY, JSON.stringify(updated));
+  } catch {}
+}
+
+function getLocalCustomContacts(): (Contact & { meetings: MeetingMemoryRecord[] })[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LOCAL_CUSTOM_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalCustomContact(contact: Contact & { meetings: MeetingMemoryRecord[] }) {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = getLocalCustomContacts().filter((c) => c.id !== contact.id);
+    const updated = [contact, ...current];
+    localStorage.setItem(LOCAL_CUSTOM_KEY, JSON.stringify(updated));
+  } catch {}
+}
+
+function removeLocalCustomContact(id: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = getLocalCustomContacts();
+    const cleanId = (id || '').trim().toLowerCase();
+    const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const updated = current.filter((c) => {
+      const cid = (c.id || '').toLowerCase();
+      return cid !== cleanId && (!slugified || cid !== slugified);
+    });
+    localStorage.setItem(LOCAL_CUSTOM_KEY, JSON.stringify(updated));
   } catch {}
 }
 
@@ -98,17 +136,36 @@ export default function ContactsPage() {
     try {
       setLoading(true);
       const res = await fetch(`/api/contacts?t=${Date.now()}`, { cache: 'no-store' });
+      let serverList: (Contact & { meetings: MeetingMemoryRecord[] })[] = [];
       if (res.ok) {
         const json = await res.json();
         if (Array.isArray(json.contacts)) {
-          const deleted = getLocalDeletedIds();
-          const filtered = json.contacts.filter((c: Contact) => {
-            const cid = c.id.toLowerCase();
-            return !deleted.includes(cid);
-          });
-          setContacts(filtered);
+          serverList = json.contacts;
         }
       }
+
+      const deleted = getLocalDeletedIds();
+      const custom = getLocalCustomContacts();
+
+      // Merge: server list + local custom contacts
+      const map = new Map<string, Contact & { meetings: MeetingMemoryRecord[] }>();
+      for (const c of serverList) {
+        map.set(c.id, c);
+      }
+      for (const c of custom) {
+        map.set(c.id, c);
+      }
+
+      const all = Array.from(map.values()).filter((c) => {
+        const cid = (c.id || '').toLowerCase();
+        const slug = cid.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        return !deleted.some((d) => {
+          const dLower = (d || '').toLowerCase();
+          return dLower === cid || (slug && dLower === slug);
+        });
+      });
+
+      setContacts(all);
     } catch (err) {
       console.error('Error loading contacts:', err);
     } finally {
@@ -153,9 +210,10 @@ export default function ContactsPage() {
         throw new Error(json.error || 'Failed to create contact');
       }
 
-      // Immediately add newly created contact to state so it appears instantly on screen!
+      // Immediately add newly created contact to state and localStorage so it appears instantly and persists!
       if (json.contact) {
         removeLocalDeletedId(json.contact.id);
+        saveLocalCustomContact(json.contact);
         setContacts((prev) => [json.contact, ...prev.filter((c) => c.id !== json.contact.id)]);
         setSuccessToast({ id: json.contact.id, name: json.contact.name });
       }
@@ -186,6 +244,7 @@ export default function ContactsPage() {
   const handleDeleteContact = async (id: string) => {
     // 1. Immediately persist to localStorage so it can NEVER reappear even if Vercel cold-starts
     addLocalDeletedId(id);
+    removeLocalCustomContact(id);
 
     // 2. Optimistic UI update: instantly disappears from the UI!
     setContacts((prev) => prev.filter((c) => c.id !== id));
@@ -770,6 +829,7 @@ export default function ContactsPage() {
           }}
           onDelete={(deletedId) => {
             addLocalDeletedId(deletedId);
+            removeLocalCustomContact(deletedId);
             setContacts((prev) => prev.filter((c) => c.id !== deletedId));
           }}
         />

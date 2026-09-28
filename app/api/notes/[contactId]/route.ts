@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrCreateContact } from '@/lib/contacts-store';
+import { resolveContact } from '@/lib/contacts-store';
 import { getNotesForContact } from '@/lib/notes-store';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ export async function GET(
   try {
     const rawId = params.contactId || '';
     const contactId = decodeURIComponent(rawId).trim();
-    const contact = getOrCreateContact(contactId);
+    const contact = resolveContact(contactId, request.headers.get('x-contact-data'));
 
     if (!contact) {
       return NextResponse.json({

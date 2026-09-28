@@ -104,10 +104,54 @@ export default function BriefDetailPage() {
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
 
+  const getContactHeader = (cid: string): Record<string, string> => {
+    const headers: Record<string, string> = {};
+    if (typeof window !== 'undefined' && cid) {
+      try {
+        const raw = localStorage.getItem('ahead_custom_contacts_v1');
+        if (raw) {
+          const list = JSON.parse(raw);
+          const cleanId = cid.trim().toLowerCase();
+          const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          const found = list.find((c: any) => {
+            const idLower = (c.id || '').toLowerCase();
+            const nameSlug = (c.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            return idLower === cleanId || idLower === slugified || (nameSlug && nameSlug === slugified);
+          });
+          if (found) {
+            headers['x-contact-data'] = encodeURIComponent(JSON.stringify(found));
+          }
+        }
+      } catch {}
+    }
+    return headers;
+  };
+
+  const isDeletedLocally = (cid: string): boolean => {
+    if (typeof window === 'undefined' || !cid) return false;
+    try {
+      const raw = localStorage.getItem('ahead_deleted_contacts_v1');
+      if (!raw) return false;
+      const list = JSON.parse(raw);
+      const cleanId = cid.trim().toLowerCase();
+      const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return list.some((d: string) => {
+        const dLower = (d || '').toLowerCase();
+        return dLower === cleanId || (slugified && dLower === slugified);
+      });
+    } catch {
+      return false;
+    }
+  };
+
   const fetchBrief = async () => {
     if (!contactId) {
       setError('Contact ID was not specified.');
       setLoading(false);
+      return;
+    }
+    if (isDeletedLocally(contactId)) {
+      window.location.replace('/');
       return;
     }
     setLoading(true);
@@ -115,6 +159,7 @@ export default function BriefDetailPage() {
     try {
       const res = await fetch(`/api/brief/${encodeURIComponent(contactId)}?t=${Date.now()}`, {
         cache: 'no-store',
+        headers: getContactHeader(contactId),
       });
       if (!res.ok) {
         const errorJson = await res.json().catch(() => ({}));
@@ -137,8 +182,9 @@ export default function BriefDetailPage() {
   const fetchNotes = async () => {
     setLoadingNotes(true);
     try {
-      const res = await fetch(`/api/notes/${contactId}?t=${Date.now()}`, {
+      const res = await fetch(`/api/notes/${encodeURIComponent(contactId)}?t=${Date.now()}`, {
         cache: 'no-store',
+        headers: getContactHeader(contactId),
       });
       if (res.ok) {
         const json = await res.json();
@@ -169,9 +215,19 @@ export default function BriefDetailPage() {
           const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           const updated = Array.from(new Set([...current, cleanId, slugified].filter(Boolean)));
           localStorage.setItem('ahead_deleted_contacts_v1', JSON.stringify(updated));
+
+          const rawCustom = localStorage.getItem('ahead_custom_contacts_v1');
+          if (rawCustom) {
+            const list = JSON.parse(rawCustom);
+            const filtered = list.filter((c: any) => {
+              const cid = (c.id || '').toLowerCase();
+              return cid !== cleanId && (!slugified || cid !== slugified);
+            });
+            localStorage.setItem('ahead_custom_contacts_v1', JSON.stringify(filtered));
+          }
         } catch {}
       }
-      const res = await fetch(`/api/contacts/${encodeURIComponent(contactId)}`, {
+      await fetch(`/api/contacts/${encodeURIComponent(contactId)}`, {
         method: 'DELETE',
       });
       window.location.replace('/');
@@ -224,7 +280,10 @@ export default function BriefDetailPage() {
       const finalTitle = noteTitle.trim() || `${noteType} with ${data?.contact?.name || 'Client'}`;
       const res = await fetch('/api/notes/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getContactHeader(contactId),
+        },
         body: JSON.stringify({
           contactId: activeContactId,
           date: noteDate,
@@ -324,9 +383,12 @@ export default function BriefDetailPage() {
     setDraftingEmail(true);
     setDraftError(null);
     try {
-      const res = await fetch(`/api/followup/${contactId}`, {
+      const res = await fetch(`/api/followup/${encodeURIComponent(contactId)}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getContactHeader(contactId),
+        },
       });
       const resJson = await res.json();
       if (!res.ok) {
@@ -354,9 +416,12 @@ export default function BriefDetailPage() {
     setGeneratingHandoff(true);
     setHandoffError(null);
     try {
-      const res = await fetch(`/api/handoff/${contactId}`, {
+      const res = await fetch(`/api/handoff/${encodeURIComponent(contactId)}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getContactHeader(contactId),
+        },
       });
       const resJson = await res.json();
       if (!res.ok) {

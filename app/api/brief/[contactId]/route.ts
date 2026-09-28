@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrCreateContact } from '@/lib/contacts-store';
+import { resolveContact } from '@/lib/contacts-store';
 import { recallMemories, reflectOnBank, isHindsightConfigured, createBankIfNotExists } from '@/lib/hindsight';
 import { generateGenericBrief, generateHindsightBrief, isGroqConfigured } from '@/lib/groq';
 import { BriefResponse, RecalledItem } from '@/lib/types';
@@ -13,7 +13,8 @@ export async function GET(
 ) {
   const rawId = params.contactId || '';
   const contactId = decodeURIComponent(rawId).trim();
-  const contact = getOrCreateContact(contactId);
+  const customHeader = request.headers.get('x-contact-data');
+  const contact = resolveContact(contactId, customHeader);
 
   if (!contact) {
     return NextResponse.json(

@@ -1,15 +1,50 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { Contact, MeetingMemoryRecord } from './types';
 import { SEEDED_CONTACTS } from './contacts';
 import { isHindsightConfigured, createBankIfNotExists } from './hindsight';
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const BASE_DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = IS_SERVERLESS ? path.join(os.tmpdir(), 'ahead-data') : BASE_DATA_DIR;
+
 const CONTACTS_FILE = path.resolve(DATA_DIR, 'contacts.json');
 const DELETED_CONTACTS_FILE = path.resolve(DATA_DIR, 'deleted-contacts.json');
 
+function ensureDataFiles() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+
+    if (IS_SERVERLESS) {
+      if (!fs.existsSync(CONTACTS_FILE)) {
+        const sourceContacts = path.resolve(BASE_DATA_DIR, 'contacts.json');
+        if (fs.existsSync(sourceContacts)) {
+          fs.copyFileSync(sourceContacts, CONTACTS_FILE);
+        } else {
+          fs.writeFileSync(CONTACTS_FILE, JSON.stringify(SEEDED_CONTACTS, null, 2), 'utf-8');
+        }
+      }
+
+      if (!fs.existsSync(DELETED_CONTACTS_FILE)) {
+        const sourceDeleted = path.resolve(BASE_DATA_DIR, 'deleted-contacts.json');
+        if (fs.existsSync(sourceDeleted)) {
+          fs.copyFileSync(sourceDeleted, DELETED_CONTACTS_FILE);
+        } else {
+          fs.writeFileSync(DELETED_CONTACTS_FILE, JSON.stringify([], null, 2), 'utf-8');
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[contacts-store] ensureDataFiles warning:', err);
+  }
+}
+
 export function getDeletedContactIds(): string[] {
   try {
+    ensureDataFiles();
     if (!fs.existsSync(DELETED_CONTACTS_FILE)) {
       return [];
     }
@@ -31,14 +66,12 @@ export function isContactDeleted(id: string): boolean {
 
 export function markContactDeleted(id: string) {
   try {
+    ensureDataFiles();
     const deleted = getDeletedContactIds();
     const rawId = (id || '').trim().toLowerCase();
     const slugified = decodeURIComponent(rawId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const toAdd = [rawId, slugified].filter(Boolean);
     const updated = Array.from(new Set([...deleted, ...toAdd]));
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
     fs.writeFileSync(DELETED_CONTACTS_FILE, JSON.stringify(updated, null, 2), 'utf-8');
   } catch (err) {
     console.error('[contacts-store] Error saving deleted-contacts file:', err);
@@ -47,15 +80,13 @@ export function markContactDeleted(id: string) {
 
 export function unmarkContactDeleted(id: string) {
   try {
+    ensureDataFiles();
     const deleted = getDeletedContactIds();
     const rawId = (id || '').trim().toLowerCase();
     const slugified = decodeURIComponent(rawId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const updated = deleted.filter(
       (d) => d.toLowerCase() !== rawId && (!slugified || d.toLowerCase() !== slugified)
     );
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
     fs.writeFileSync(DELETED_CONTACTS_FILE, JSON.stringify(updated, null, 2), 'utf-8');
   } catch (err) {
     console.error('[contacts-store] Error updating deleted-contacts file:', err);
@@ -64,21 +95,34 @@ export function unmarkContactDeleted(id: string) {
 
 export function getAllContacts(): (Contact & { meetings: MeetingMemoryRecord[] })[] {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-
+    ensureDataFiles();
+    let contacts: (Contact & { meetings: MeetingMemoryRecord[] })[] = [];
     if (!fs.existsSync(CONTACTS_FILE)) {
-      fs.writeFileSync(CONTACTS_FILE, JSON.stringify(SEEDED_CONTACTS, null, 2), 'utf-8');
-      return SEEDED_CONTACTS;
+      contacts = SEEDED_CONTACTS;
+      try {
+        fs.writeFileSync(CONTACTS_FILE, JSON.stringify(SEEDED_CONTACTS, null, 2), 'utf-8');
+      } catch {}
+    } else {
+      const raw = fs.readFileSync(CONTACTS_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        contacts = parsed;
+      } else {
+        contacts = SEEDED_CONTACTS;
+      }
     }
 
-    const raw = fs.readFileSync(CONTACTS_FILE, 'utf-8');
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed;
+    const deletedIds = getDeletedContactIds();
+    if (deletedIds.length > 0) {
+      const deletedSet = new Set(deletedIds.map((d) => d.toLowerCase()));
+      contacts = contacts.filter((c) => {
+        const idLower = (c.id || '').toLowerCase();
+        const slug = idLower.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        return !deletedSet.has(idLower) && !deletedSet.has(slug);
+      });
     }
-    return SEEDED_CONTACTS;
+
+    return contacts;
   } catch (err) {
     console.error('[contacts-store] Error reading contacts file:', err);
     return SEEDED_CONTACTS;
@@ -87,9 +131,7 @@ export function getAllContacts(): (Contact & { meetings: MeetingMemoryRecord[] }
 
 export function saveAllContacts(contacts: (Contact & { meetings: MeetingMemoryRecord[] })[]) {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
+    ensureDataFiles();
     fs.writeFileSync(CONTACTS_FILE, JSON.stringify(contacts, null, 2), 'utf-8');
   } catch (err) {
     console.error('[contacts-store] Error saving contacts file:', err);
@@ -98,6 +140,8 @@ export function saveAllContacts(contacts: (Contact & { meetings: MeetingMemoryRe
 
 export function getContactById(id: string): (Contact & { meetings: MeetingMemoryRecord[] }) | undefined {
   if (!id || typeof id !== 'string') return undefined;
+  if (isContactDeleted(id)) return undefined;
+
   const all = getAllContacts();
   const rawId = id.trim();
   const decoded = decodeURIComponent(rawId).trim().toLowerCase();
@@ -109,6 +153,45 @@ export function getContactById(id: string): (Contact & { meetings: MeetingMemory
     (slugified ? all.find((c) => c.id.toLowerCase() === slugified) : undefined) ||
     all.find((c) => c.name.toLowerCase() === decoded)
   );
+}
+
+export function resolveContact(
+  contactId: string,
+  customHeaderData?: string | null
+): (Contact & { meetings: MeetingMemoryRecord[] }) | undefined {
+  if (!contactId && !customHeaderData) return undefined;
+
+  const cleanId = (contactId || '').trim();
+  if (cleanId && isContactDeleted(cleanId)) return undefined;
+
+  // If client sent contact payload via header, ensure it exists in store
+  if (customHeaderData) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(customHeaderData));
+      if (parsed && (parsed.id || parsed.name)) {
+        const idToMatch = (parsed.id || cleanId).trim();
+        if (!isContactDeleted(idToMatch)) {
+          const existing = getContactById(idToMatch);
+          if (existing) return existing;
+
+          return createNewContact({
+            id: parsed.id || cleanId,
+            name: parsed.name || 'Executive Contact',
+            role: parsed.role || 'Executive Partner',
+            company: parsed.company || 'Enterprise Organization',
+            email: parsed.email,
+            phone: parsed.phone,
+            linkedin: parsed.linkedin,
+            tagline: parsed.tagline,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[contacts-store] Failed to parse custom header data:', e);
+    }
+  }
+
+  return getOrCreateContact(cleanId);
 }
 
 export function getOrCreateContact(
@@ -124,9 +207,6 @@ export function getOrCreateContact(
     });
   }
 
-  const existing = getContactById(idOrName);
-  if (existing) return existing;
-
   const raw = idOrName.trim();
   const decoded = decodeURIComponent(raw).trim();
   const cleanId = decoded
@@ -136,9 +216,12 @@ export function getOrCreateContact(
     .replace(/(^-|-$)/g, '');
 
   // If this contact was deleted and resurrection is not permitted, do not re-create it
-  if (!options?.allowDeletedResurrection && isContactDeleted(cleanId)) {
+  if (!options?.allowDeletedResurrection && (isContactDeleted(raw) || isContactDeleted(cleanId))) {
     return undefined;
   }
+
+  const existing = getContactById(idOrName);
+  if (existing) return existing;
 
   const words = (cleanId || 'Executive Contact')
     .split('-')

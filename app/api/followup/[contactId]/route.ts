@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById } from '@/lib/contacts-store';
+import { resolveContact } from '@/lib/contacts-store';
 import { recallMemories, isHindsightConfigured } from '@/lib/hindsight';
 import { draftFollowupEmail, isGroqConfigured } from '@/lib/groq';
 
@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: { contactId: string } }
 ) {
   const contactId = params.contactId;
-  const contact = getContactById(contactId);
+  const contact = resolveContact(contactId, request.headers.get('x-contact-data'));
 
   if (!contact) {
     return NextResponse.json(

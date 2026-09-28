@@ -96,6 +96,22 @@ export function EditContactModal({
         throw new Error(json.error || 'Failed to update contact');
       }
 
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('ahead_custom_contacts_v1');
+          if (raw) {
+            const list = JSON.parse(raw);
+            const cleanId = contact.id.trim().toLowerCase();
+            const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            const updatedList = list.map((c: any) => {
+              const cid = (c.id || '').toLowerCase();
+              return cid === cleanId || cid === slugified ? { ...c, ...json.contact } : c;
+            });
+            localStorage.setItem('ahead_custom_contacts_v1', JSON.stringify(updatedList));
+          }
+        } catch {}
+      }
+
       onSuccess(json.contact);
       onClose();
     } catch (err: any) {
@@ -133,6 +149,16 @@ export function EditContactModal({
           const slugified = decodeURIComponent(cleanId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           const updated = Array.from(new Set([...current, cleanId, slugified].filter(Boolean)));
           localStorage.setItem('ahead_deleted_contacts_v1', JSON.stringify(updated));
+
+          const rawCustom = localStorage.getItem('ahead_custom_contacts_v1');
+          if (rawCustom) {
+            const list = JSON.parse(rawCustom);
+            const filtered = list.filter((c: any) => {
+              const cid = (c.id || '').toLowerCase();
+              return cid !== cleanId && (!slugified || cid !== slugified);
+            });
+            localStorage.setItem('ahead_custom_contacts_v1', JSON.stringify(filtered));
+          }
         } catch {}
       }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrCreateContact } from '@/lib/contacts-store';
+import { resolveContact } from '@/lib/contacts-store';
 import { retainMemory, isHindsightConfigured } from '@/lib/hindsight';
 import { saveNoteForContact } from '@/lib/notes-store';
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contact = getOrCreateContact(contactId);
+    const contact = resolveContact(contactId, request.headers.get('x-contact-data'));
     if (!contact) {
       return NextResponse.json(
         { error: `Contact with ID "${contactId}" was deleted or not found.` },
