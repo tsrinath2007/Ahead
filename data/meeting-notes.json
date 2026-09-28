@@ -184,5 +184,25 @@
     "hasOutstandingCommitment": true,
     "id": "sarah-lin-1790608425324",
     "createdAt": "2026-09-28T15:13:45.324Z"
+  },
+  {
+    "contactId": "srinath-thota",
+    "date": "2026-09-28",
+    "title": "Executive Strategy & Architecture Sync",
+    "notes": "Strategy kick-off session with Srinath Thota. Discussed Q4 launch milestones, enterprise partner onboarding, and AI memory architecture. Srinath requested a revised pitch deck and API benchmark numbers by next Tuesday. We agreed to reconvene on Wednesday to review pilot commitments.",
+    "type": "Strategy",
+    "promisesYouMade": [
+      "Send revised pitch deck and API benchmark numbers by next Tuesday"
+    ],
+    "promisesTheyMade": [
+      "Review pilot commitments and confirm Wednesday working session"
+    ],
+    "keyDecisions": [
+      "Focus Q4 launch on executive relationship intelligence and Hindsight bank-per-contact model"
+    ],
+    "resolvesPastOverdue": false,
+    "hasOutstandingCommitment": true,
+    "id": "srinath-thota-1790611632277",
+    "createdAt": "2026-09-28T16:07:12.277Z"
   }
 ]

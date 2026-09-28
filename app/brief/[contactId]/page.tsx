@@ -339,6 +339,49 @@ export default function BriefDetailPage() {
   }
 
   if (error || !data) {
+    const isNotFound = error?.toLowerCase().includes('not found');
+
+    if (isNotFound) {
+      return (
+        <div className="max-w-2xl mx-auto space-y-6 pt-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 font-semibold"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Contacts Directory
+          </Link>
+
+          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-8 text-center space-y-5">
+            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+              <Users className="w-7 h-7" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-slate-900">Contact Not Found</h2>
+              <p className="text-sm text-slate-600 max-w-md mx-auto">
+                No contact profile exists for <code className="text-slate-800 font-mono bg-slate-100 px-1.5 py-0.5 rounded text-xs">{contactId}</code>. It may not have been created yet or has been removed.
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/"
+                className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition-colors inline-flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Return to Directory &amp; Add Contact
+              </Link>
+              <button
+                onClick={fetchBrief}
+                className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <Link

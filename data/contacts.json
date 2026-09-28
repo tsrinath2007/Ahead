@@ -119,5 +119,27 @@
         "hasOutstandingCommitment": true
       }
     ]
+  },
+  {
+    "id": "srinath-thota",
+    "name": "Srinath Thota",
+    "role": "Founder",
+    "company": "Ahead Tech",
+    "bankId": "contact-srinath-thota",
+    "avatar": "ST",
+    "tagline": "Founder & Lead Architect — Leading executive AI relationship intelligence",
+    "isDemoFocus": false,
+    "email": "srinath@ahead.app",
+    "phone": "+1 (415) 555-0199",
+    "linkedin": "https://linkedin.com/in/srinath-thota",
+    "createdAt": "2026-09-28T16:04:59.998Z",
+    "meetings": [
+      {
+        "date": "2026-09-28",
+        "summary": "Executive Strategy & Architecture Sync",
+        "content": "Meeting on September 28, 2026 with Srinath Thota: Strategy kick-off session with Srinath Thota. Discussed Q4 launch milestones, enterprise partner onboarding, and AI memory architecture. Srinath requested a revised pitch deck and API benchmark numbers by next Tuesday. We agreed to reconvene on Wednesday to review pilot commitments.",
+        "hasOutstandingCommitment": true
+      }
+    ]
   }
 ]
