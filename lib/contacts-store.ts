@@ -6,6 +6,61 @@ import { isHindsightConfigured, createBankIfNotExists } from './hindsight';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const CONTACTS_FILE = path.resolve(DATA_DIR, 'contacts.json');
+const DELETED_CONTACTS_FILE = path.resolve(DATA_DIR, 'deleted-contacts.json');
+
+export function getDeletedContactIds(): string[] {
+  try {
+    if (!fs.existsSync(DELETED_CONTACTS_FILE)) {
+      return [];
+    }
+    const raw = fs.readFileSync(DELETED_CONTACTS_FILE, 'utf-8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+export function isContactDeleted(id: string): boolean {
+  if (!id) return false;
+  const deleted = getDeletedContactIds();
+  const rawId = id.trim().toLowerCase();
+  const slugified = decodeURIComponent(rawId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return deleted.some((d) => d.toLowerCase() === rawId || (slugified && d.toLowerCase() === slugified));
+}
+
+export function markContactDeleted(id: string) {
+  try {
+    const deleted = getDeletedContactIds();
+    const rawId = (id || '').trim().toLowerCase();
+    const slugified = decodeURIComponent(rawId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const toAdd = [rawId, slugified].filter(Boolean);
+    const updated = Array.from(new Set([...deleted, ...toAdd]));
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(DELETED_CONTACTS_FILE, JSON.stringify(updated, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[contacts-store] Error saving deleted-contacts file:', err);
+  }
+}
+
+export function unmarkContactDeleted(id: string) {
+  try {
+    const deleted = getDeletedContactIds();
+    const rawId = (id || '').trim().toLowerCase();
+    const slugified = decodeURIComponent(rawId).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const updated = deleted.filter(
+      (d) => d.toLowerCase() !== rawId && (!slugified || d.toLowerCase() !== slugified)
+    );
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(DELETED_CONTACTS_FILE, JSON.stringify(updated, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[contacts-store] Error updating deleted-contacts file:', err);
+  }
+}
 
 export function getAllContacts(): (Contact & { meetings: MeetingMemoryRecord[] })[] {
   try {
@@ -20,7 +75,7 @@ export function getAllContacts(): (Contact & { meetings: MeetingMemoryRecord[] }
 
     const raw = fs.readFileSync(CONTACTS_FILE, 'utf-8');
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
+    if (Array.isArray(parsed)) {
       return parsed;
     }
     return SEEDED_CONTACTS;
@@ -56,7 +111,10 @@ export function getContactById(id: string): (Contact & { meetings: MeetingMemory
   );
 }
 
-export function getOrCreateContact(idOrName: string): Contact & { meetings: MeetingMemoryRecord[] } {
+export function getOrCreateContact(
+  idOrName: string,
+  options?: { allowDeletedResurrection?: boolean }
+): (Contact & { meetings: MeetingMemoryRecord[] }) | undefined {
   if (!idOrName || typeof idOrName !== 'string' || !idOrName.trim()) {
     return createNewContact({
       name: 'Executive Contact',
@@ -76,6 +134,11 @@ export function getOrCreateContact(idOrName: string): Contact & { meetings: Meet
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+
+  // If this contact was deleted and resurrection is not permitted, do not re-create it
+  if (!options?.allowDeletedResurrection && isContactDeleted(cleanId)) {
+    return undefined;
+  }
 
   const words = (cleanId || 'Executive Contact')
     .split('-')
@@ -175,6 +238,7 @@ export function createNewContact(input: {
     meetings,
   };
 
+  unmarkContactDeleted(id);
   all.push(newContact);
   saveAllContacts(all);
   return newContact;
@@ -231,6 +295,9 @@ export function deleteContact(id: string): boolean {
   const decoded = decodeURIComponent(rawId).trim().toLowerCase();
   const slugified = decoded.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
+  markContactDeleted(id);
+  if (slugified) markContactDeleted(slugified);
+
   const index = all.findIndex(
     (c) =>
       c.id === rawId ||
@@ -240,8 +307,11 @@ export function deleteContact(id: string): boolean {
   );
   if (index === -1) return false;
 
-  all.splice(index, 1);
+  const removed = all.splice(index, 1);
   saveAllContacts(all);
+  if (removed[0]?.id) {
+    markContactDeleted(removed[0].id);
+  }
   return true;
 }
 

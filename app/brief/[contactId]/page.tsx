@@ -118,6 +118,10 @@ export default function BriefDetailPage() {
       });
       if (!res.ok) {
         const errorJson = await res.json().catch(() => ({}));
+        if (errorJson.deleted) {
+          window.location.replace('/');
+          return;
+        }
         throw new Error(errorJson.error || `HTTP error ${res.status}`);
       }
       const json: BriefResponse = await res.json();
@@ -157,18 +161,20 @@ export default function BriefDetailPage() {
   const handleDeleteCurrentContact = async () => {
     setDeletingContact(true);
     try {
-      const res = await fetch(`/api/contacts/${contactId}`, {
+      const res = await fetch(`/api/contacts/${encodeURIComponent(contactId)}`, {
         method: 'DELETE',
       });
       if (res.ok) {
-        router.push('/');
+        window.location.replace('/');
+        return;
       } else {
         const json = await res.json();
         alert(json.error || 'Failed to delete contact');
       }
     } catch (err) {
       console.error('Error deleting contact:', err);
-      router.push('/');
+      window.location.replace('/');
+      return;
     } finally {
       setDeletingContact(false);
       setShowDeleteConfirm(false);
@@ -1869,7 +1875,7 @@ export default function BriefDetailPage() {
             setData((prev) => (prev ? { ...prev, contact: { ...prev.contact, ...updated } } : prev));
           }}
           onDelete={() => {
-            router.push('/');
+            window.location.replace('/');
           }}
         />
       )}

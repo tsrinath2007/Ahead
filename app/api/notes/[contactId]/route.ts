@@ -13,6 +13,15 @@ export async function GET(
     const rawId = params.contactId || '';
     const contactId = decodeURIComponent(rawId).trim();
     const contact = getOrCreateContact(contactId);
+
+    if (!contact) {
+      return NextResponse.json({
+        contact: null,
+        notes: [],
+        count: 0,
+      });
+    }
+
     const notes = await getNotesForContact(contact.id);
 
     return NextResponse.json({

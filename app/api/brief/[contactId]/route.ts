@@ -15,6 +15,13 @@ export async function GET(
   const contactId = decodeURIComponent(rawId).trim();
   const contact = getOrCreateContact(contactId);
 
+  if (!contact) {
+    return NextResponse.json(
+      { error: `Contact "${contactId}" was deleted or does not exist.`, deleted: true },
+      { status: 404 }
+    );
+  }
+
   const groqKeyOverride = request.headers.get('x-groq-api-key') || undefined;
 
   const diagnostics = {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getContactById, getOrCreateContact, updateContact, deleteContact } from '@/lib/contacts-store';
+import { getContactById, getOrCreateContact, updateContact, deleteContact, markContactDeleted } from '@/lib/contacts-store';
 import { deleteNotesForContact } from '@/lib/notes-store';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,12 @@ export async function GET(
     const rawContactId = params.contactId || '';
     const contactId = decodeURIComponent(rawContactId).trim();
     const contact = getOrCreateContact(contactId);
+    if (!contact) {
+      return NextResponse.json(
+        { error: `Contact "${contactId}" was deleted or not found.`, deleted: true },
+        { status: 404 }
+      );
+    }
     return NextResponse.json({ contact });
   } catch (error: any) {
     return NextResponse.json(
@@ -71,10 +77,12 @@ export async function DELETE(
     const contactId = decodeURIComponent(rawContactId).trim();
     const existing = getContactById(contactId);
     if (!existing) {
-      return NextResponse.json(
-        { error: `Contact with ID "${contactId}" not found.` },
-        { status: 404 }
-      );
+      markContactDeleted(contactId);
+      await deleteNotesForContact(contactId);
+      return NextResponse.json({
+        success: true,
+        message: `Contact "${contactId}" is deleted.`,
+      });
     }
 
     // Protect demo benchmark contacts if needed, or allow deleting with warning

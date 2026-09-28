@@ -28,6 +28,12 @@ export async function POST(request: NextRequest) {
     }
 
     const contact = getOrCreateContact(contactId);
+    if (!contact) {
+      return NextResponse.json(
+        { error: `Contact with ID "${contactId}" was deleted or not found.` },
+        { status: 404 }
+      );
+    }
 
     const meetingDate = date || new Date().toISOString().split('T')[0];
 

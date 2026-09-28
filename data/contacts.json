@@ -141,17 +141,5 @@
         "hasOutstandingCommitment": true
       }
     ]
-  },
-  {
-    "id": "ghb-nm",
-    "name": "Ghb Nm",
-    "role": "Executive Partner",
-    "company": "Enterprise Organization",
-    "bankId": "contact-ghb-nm",
-    "avatar": "GN",
-    "tagline": "Stakeholder dossier for Ghb Nm",
-    "isDemoFocus": false,
-    "createdAt": "2026-09-28T18:26:12.532Z",
-    "meetings": []
   }
 ]

@@ -38,10 +38,8 @@ function LinkedinIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
 
 export default function ContactsPage() {
   const router = useRouter();
-  const [contacts, setContacts] = useState<(Contact & { meetings: MeetingMemoryRecord[] })[]>(
-    SEEDED_CONTACTS
-  );
-  const [loading, setLoading] = useState(false);
+  const [contacts, setContacts] = useState<(Contact & { meetings: MeetingMemoryRecord[] })[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
@@ -73,6 +71,8 @@ export default function ContactsPage() {
       }
     } catch (err) {
       console.error('Error loading contacts:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -148,12 +148,10 @@ export default function ContactsPage() {
     setContactToDelete(null);
 
     try {
-      const res = await fetch(`/api/contacts/${id}`, {
+      const res = await fetch(`/api/contacts/${encodeURIComponent(id)}`, {
         method: 'DELETE',
       });
-      if (!res.ok) {
-        await fetchContacts();
-      }
+      await fetchContacts();
     } catch (err) {
       console.error('Error deleting contact:', err);
       await fetchContacts();
@@ -273,8 +271,31 @@ export default function ContactsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contacts.map((contact) => {
+        {loading && contacts.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="bg-white border border-slate-200 rounded-2xl p-6 h-64 animate-pulse flex flex-col justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-slate-200" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-slate-200 rounded w-2/3" />
+                    <div className="h-3 bg-slate-200 rounded w-1/3" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 bg-slate-200 rounded w-full" />
+                  <div className="h-3 bg-slate-200 rounded w-4/5" />
+                </div>
+                <div className="h-10 bg-slate-200 rounded-xl w-full" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {contacts.map((contact) => {
             const isDemo = contact.isDemoFocus;
             const hasOverdue = contact.meetings?.some((m) => m.hasOutstandingCommitment);
 
@@ -465,7 +486,8 @@ export default function ContactsPage() {
             );
           })}
         </div>
-      </div>
+      )}
+    </div>
 
       {/* ========================================================================= */}
       {/* MODAL: ADD A NEW CONTACT & PROVISION HINDSIGHT BANK                        */}
