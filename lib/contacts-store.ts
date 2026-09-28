@@ -41,8 +41,18 @@ export function saveAllContacts(contacts: (Contact & { meetings: MeetingMemoryRe
 }
 
 export function getContactById(id: string): (Contact & { meetings: MeetingMemoryRecord[] }) | undefined {
+  if (!id || typeof id !== 'string') return undefined;
   const all = getAllContacts();
-  return all.find((c) => c.id === id);
+  const rawId = id.trim();
+  const decoded = decodeURIComponent(rawId).trim().toLowerCase();
+  const slugified = decoded.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+  return (
+    all.find((c) => c.id === rawId) ||
+    all.find((c) => c.id.toLowerCase() === decoded) ||
+    (slugified ? all.find((c) => c.id.toLowerCase() === slugified) : undefined) ||
+    all.find((c) => c.name.toLowerCase() === decoded)
+  );
 }
 
 export function createNewContact(input: {
@@ -59,12 +69,21 @@ export function createNewContact(input: {
 }): Contact & { meetings: MeetingMemoryRecord[] } {
   const all = getAllContacts();
 
-  // Create clean slug ID
-  const baseId = input.name
+  // Create clean slug ID with guaranteed fallback
+  let baseId = (input.name || '')
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+
+  if (!baseId) {
+    const compSlug = (input.company || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    baseId = compSlug ? `contact-${compSlug}` : `contact-${Date.now().toString(36)}`;
+  }
 
   let id = baseId;
   let counter = 1;

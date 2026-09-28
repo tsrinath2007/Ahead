@@ -45,6 +45,7 @@ export default function ContactsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
+  const [successToast, setSuccessToast] = useState<{ id: string; name: string } | null>(null);
 
   // New Contact Form State
   const [name, setName] = useState('');
@@ -115,6 +116,7 @@ export default function ContactsPage() {
       // Immediately add newly created contact to state so it appears instantly on screen!
       if (json.contact) {
         setContacts((prev) => [json.contact, ...prev.filter((c) => c.id !== json.contact.id)]);
+        setSuccessToast({ id: json.contact.id, name: json.contact.name });
       }
 
       // Reset form & close modal immediately
@@ -132,11 +134,6 @@ export default function ContactsPage() {
 
       // Background re-sync
       fetchContacts();
-
-      // Navigate to the newly created contact's brief page
-      if (json.contact?.id) {
-        router.push(`/brief/${json.contact.id}`);
-      }
     } catch (err: any) {
       console.error('Error creating contact:', err);
       setFormError(err?.message || 'Failed to create contact');
@@ -203,6 +200,41 @@ export default function ContactsPage() {
           <strong className="underline decoration-amber-600 font-bold">Jordan Reyes</strong>. In meeting #2, you promised to send a technical integration doc within 48 hours and never did. Meeting #1 agreed to revisit pricing this quarter. Watch Hindsight surface the overdue promise instantly while the generic assistant is completely blind to it.
         </div>
       </div>
+
+      {/* Creation Success Banner */}
+      {successToast && (
+        <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 text-emerald-900 shadow-sm animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="font-bold text-sm sm:text-base text-slate-900">
+                Contact &ldquo;{successToast.name}&rdquo; created successfully!
+              </p>
+              <p className="text-xs text-slate-600">
+                New contact profile added to your directory with an active Hindsight memory bank.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              href={`/brief/${successToast.id}`}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5 shadow"
+            >
+              <span>Open Brief &amp; Notes</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setSuccessToast(null)}
+              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Contacts List Grid */}
       <div>

@@ -11,12 +11,13 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { contactId: string } }
 ) {
-  const contactId = params.contactId;
+  const rawId = params.contactId || '';
+  const contactId = decodeURIComponent(rawId).trim();
   const contact = getContactById(contactId);
 
   if (!contact) {
     return NextResponse.json(
-      { error: `Contact with ID "${contactId}" not found.` },
+      { error: `Contact with ID "${contactId || rawId}" not found.` },
       { status: 404 }
     );
   }

@@ -51,7 +51,8 @@ function LinkedinIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
 export default function BriefDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const contactId = params.contactId as string;
+  const rawContactId = (params?.contactId as string) || '';
+  const contactId = decodeURIComponent(rawContactId).trim();
 
   const [data, setData] = useState<BriefResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,10 +105,15 @@ export default function BriefDetailPage() {
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
 
   const fetchBrief = async () => {
+    if (!contactId) {
+      setError('Contact ID was not specified.');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/brief/${contactId}?t=${Date.now()}`, {
+      const res = await fetch(`/api/brief/${encodeURIComponent(contactId)}?t=${Date.now()}`, {
         cache: 'no-store',
       });
       if (!res.ok) {
