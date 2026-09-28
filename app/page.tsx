@@ -24,6 +24,7 @@ import {
   RefreshCw,
   AlertTriangle,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 import { EditContactModal } from '@/components/EditContactModal';
 
@@ -43,6 +44,7 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
 
   // New Contact Form State
   const [name, setName] = useState('');
@@ -110,7 +112,12 @@ export default function ContactsPage() {
         throw new Error(json.error || 'Failed to create contact');
       }
 
-      // Reset form & close modal
+      // Immediately add newly created contact to state so it appears instantly on screen!
+      if (json.contact) {
+        setContacts((prev) => [json.contact, ...prev.filter((c) => c.id !== json.contact.id)]);
+      }
+
+      // Reset form & close modal immediately
       setName('');
       setRole('');
       setCompany('');
@@ -123,7 +130,8 @@ export default function ContactsPage() {
       setHasOutstandingCommitment(false);
       setShowAddModal(false);
 
-      await fetchContacts();
+      // Background re-sync
+      fetchContacts();
 
       // Navigate to the newly created contact's brief page
       if (json.contact?.id) {
@@ -134,6 +142,24 @@ export default function ContactsPage() {
       setFormError(err?.message || 'Failed to create contact');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteContact = async (id: string) => {
+    // Optimistic UI update: instantly disappears from the UI!
+    setContacts((prev) => prev.filter((c) => c.id !== id));
+    setContactToDelete(null);
+
+    try {
+      const res = await fetch(`/api/contacts/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        await fetchContacts();
+      }
+    } catch (err) {
+      console.error('Error deleting contact:', err);
+      await fetchContacts();
     }
   };
 
@@ -281,6 +307,19 @@ export default function ContactsPage() {
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
+                      {!isDemo && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setContactToDelete(contact);
+                          }}
+                          title="Delete Contact"
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -635,6 +674,41 @@ export default function ContactsPage() {
             setContacts((prev) => prev.filter((c) => c.id !== deletedId));
           }}
         />
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: DELETE CONTACT CONFIRMATION                                        */}
+      {/* ========================================================================= */}
+      {contactToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="font-bold text-slate-900 text-base">Delete Contact?</h3>
+              <p className="text-xs text-slate-600">
+                Are you sure you want to delete <strong className="text-slate-800">{contactToDelete.name}</strong>? This will permanently remove their profile and meeting notes.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setContactToDelete(null)}
+                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteContact(contactToDelete.id)}
+                className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow transition-colors"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

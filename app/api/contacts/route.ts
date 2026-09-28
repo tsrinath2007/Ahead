@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Create and persist new contact
+    // 1. Create and persist new contact immediately (disk persistence)
     const newContact = createNewContact({
       name,
       role,
@@ -59,45 +59,48 @@ export async function POST(request: NextRequest) {
       hasOutstandingCommitment,
     });
 
-    // 2. Initialize Hindsight Memory Bank
+    // 2. Persist initial meeting note locally immediately
+    const today = new Date().toISOString().split('T')[0];
+    const summary = initialMeetingSummary?.trim() || 'Initial introductory discussion';
+
+    if (initialMeetingContent && initialMeetingContent.trim()) {
+      saveNoteForContact({
+        contactId: newContact.id,
+        date: today,
+        title: summary,
+        notes: initialMeetingContent.trim(),
+        type: 'Discovery',
+        promisesYouMade: hasOutstandingCommitment
+          ? [initialMeetingContent.trim().slice(0, 120)]
+          : [],
+        promisesTheyMade: [],
+        keyDecisions: [summary],
+        resolvesPastOverdue: false,
+        hasOutstandingCommitment: Boolean(hasOutstandingCommitment),
+      }).catch((err) => console.error('[API /api/contacts] Error saving note:', err));
+    }
+
+    // 3. Provision Hindsight Memory Bank asynchronously (non-blocking for instant UI response)
     if (isHindsightConfigured()) {
-      try {
-        await createBankIfNotExists(
-          newContact.bankId,
-          `${newContact.name} - ${newContact.company}`,
-          `Executive meeting relationship and commitment tracking for ${newContact.name} at ${newContact.company}.`
-        );
+      (async () => {
+        try {
+          await createBankIfNotExists(
+            newContact.bankId,
+            `${newContact.name} - ${newContact.company}`,
+            `Executive meeting relationship and commitment tracking for ${newContact.name} at ${newContact.company}.`
+          );
 
-        // If an initial meeting/note was provided, retain it into Hindsight
-        if (initialMeetingContent && initialMeetingContent.trim()) {
-          const today = new Date().toISOString().split('T')[0];
-          const summary = initialMeetingSummary?.trim() || 'Initial introductory discussion';
-          const formatted = `Meeting on ${today} with ${newContact.name}: ${summary}\n\n${initialMeetingContent.trim()}`;
-
-          await retainMemory(newContact.bankId, formatted, {
-            context: `Initial Meeting (${today}): ${summary}`,
-            timestamp: new Date().toISOString(),
-          });
-
-          // Also save to notes store so it shows in the Meeting Notes tab
-          await saveNoteForContact({
-            contactId: newContact.id,
-            date: today,
-            title: summary,
-            notes: initialMeetingContent.trim(),
-            type: 'Discovery',
-            promisesYouMade: hasOutstandingCommitment
-              ? [initialMeetingContent.trim().slice(0, 120)]
-              : [],
-            promisesTheyMade: [],
-            keyDecisions: [summary],
-            resolvesPastOverdue: false,
-            hasOutstandingCommitment: Boolean(hasOutstandingCommitment),
-          });
+          if (initialMeetingContent && initialMeetingContent.trim()) {
+            const formatted = `Meeting on ${today} with ${newContact.name}: ${summary}\n\n${initialMeetingContent.trim()}`;
+            await retainMemory(newContact.bankId, formatted, {
+              context: `Initial Meeting (${today}): ${summary}`,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        } catch (hindsightErr: any) {
+          console.warn('[API /api/contacts] Async Hindsight bank setup notice:', hindsightErr?.message || hindsightErr);
         }
-      } catch (hindsightErr: any) {
-        console.warn('[API /api/contacts] Hindsight bank creation note:', hindsightErr?.message || hindsightErr);
-      }
+      })();
     }
 
     return NextResponse.json({

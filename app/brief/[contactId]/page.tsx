@@ -34,6 +34,7 @@ import {
   ListTodo,
   Phone,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 import { BriefResponse, MeetingNote, ExtractedCommitments } from '@/lib/types';
 import { MarkdownContent } from '@/components/MarkdownContent';
@@ -58,6 +59,8 @@ export default function BriefDetailPage() {
   const [whyBriefOpen, setWhyBriefOpen] = useState(true);
   const [showAllMemories, setShowAllMemories] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingContact, setDeletingContact] = useState(false);
 
   // Live "Log this meeting" state
   const [outcomeText, setOutcomeText] = useState('');
@@ -144,6 +147,27 @@ export default function BriefDetailPage() {
       fetchNotes();
     }
   }, [contactId]);
+
+  const handleDeleteCurrentContact = async () => {
+    setDeletingContact(true);
+    try {
+      const res = await fetch(`/api/contacts/${contactId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        router.push('/');
+      } else {
+        const json = await res.json();
+        alert(json.error || 'Failed to delete contact');
+      }
+    } catch (err) {
+      console.error('Error deleting contact:', err);
+      router.push('/');
+    } finally {
+      setDeletingContact(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   const handleExtractCommitments = async () => {
     if (!noteText.trim()) return;
@@ -611,6 +635,17 @@ export default function BriefDetailPage() {
             <Pencil className="w-3.5 h-3.5 text-slate-500" />
             <span>Edit Contact Info</span>
           </button>
+
+          {!isDemo && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors border border-rose-200 shadow-sm"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+              <span>Delete Contact</span>
+            </button>
+          )}
 
           <div className="flex items-center gap-3 text-xs bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl">
             <Calendar className="w-4 h-4 text-indigo-600 flex-shrink-0" />
@@ -1829,6 +1864,43 @@ export default function BriefDetailPage() {
             router.push('/');
           }}
         />
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: DELETE CONTACT CONFIRMATION                                        */}
+      {/* ========================================================================= */}
+      {showDeleteConfirm && contact && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="font-bold text-slate-900 text-base">Delete Contact?</h3>
+              <p className="text-xs text-slate-600">
+                Are you sure you want to permanently delete <strong className="text-slate-800">{contact.name}</strong> and all associated meeting notes?
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deletingContact}
+                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteCurrentContact}
+                disabled={deletingContact}
+                className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white text-xs font-bold rounded-xl shadow transition-colors"
+              >
+                {deletingContact ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
